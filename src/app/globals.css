@@ -1,0 +1,611 @@
+@import "tailwindcss";
+
+/* =============================================================================
+   MUSAFIR TRAVELS — DESIGN TOKENS
+   Single source of truth. Never hardcode a colour, duration or easing curve
+   anywhere else in the codebase; reach for a token.
+   ============================================================================= */
+
+@theme {
+  /* --- Brand palette -------------------------------------------------------
+     Taken directly from the Musafir Travels logo, which uses exactly two
+     colours: amber #FFB403 and charcoal #2B2A29. Everything below is a tint,
+     shade or neutral derived from those two — no third hue is introduced, so
+     the site cannot drift away from the mark. */
+  --color-ink-900: #100f0e;
+  --color-ink-800: #1c1b1a;
+  --color-ink-700: #2b2a29; /* the logo's charcoal, exactly */
+  --color-ink-600: #3a3937;
+  --color-ink-500: #4d4b48;
+
+  --color-sand-50: #fbf8f2;
+  --color-sand-100: #f4efe4;
+  --color-sand-200: #e9e0cd;
+  --color-sand-300: #d8cbaf;
+  --color-sand-400: #bdac8a;
+
+  /* Amber ramp built around the logo's #FFB403. */
+  --color-amber-200: #ffe0a3;
+  --color-amber-300: #ffcb5c;
+  --color-amber-400: #ffb403; /* the logo's amber, exactly */
+  --color-amber-500: #e09b00;
+  --color-amber-600: #b87d00;
+  --color-amber-700: #8a5d00;
+
+  /* Neutral support tones. Deliberately desaturated so nothing competes with
+     the amber — the mark only ever has one accent. */
+  --color-clay-400: #a8703a;
+  --color-stone-400: #8a8580;
+
+  /* --- Typography ---------------------------------------------------------- */
+  --font-display: var(--font-fraunces), "Iowan Old Style", "Palatino Linotype",
+    Palatino, Georgia, serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Fluid editorial scale. clamp() keeps 320px → 1920px+ readable without
+     a breakpoint per size. */
+  --text-caption: 0.6875rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.14em;
+
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.5;
+  --text-label--letter-spacing: 0.02em;
+
+  --text-body: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  --text-body--line-height: 1.65;
+
+  --text-lede: clamp(1.0625rem, 1rem + 0.5vw, 1.375rem);
+  --text-lede--line-height: 1.55;
+
+  --text-h3: clamp(1.25rem, 1.1rem + 0.7vw, 1.75rem);
+  --text-h3--line-height: 1.25;
+
+  --text-h2: clamp(1.875rem, 1.4rem + 2.2vw, 3.5rem);
+  --text-h2--line-height: 1.08;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h1: clamp(2.5rem, 1.6rem + 4.2vw, 6rem);
+  --text-h1--line-height: 0.98;
+  --text-h1--letter-spacing: -0.03em;
+
+  --text-display: clamp(3rem, 1.2rem + 7.6vw, 10.5rem);
+  --text-display--line-height: 0.88;
+  --text-display--letter-spacing: -0.045em;
+
+  --text-price: clamp(1.375rem, 1.2rem + 0.8vw, 2rem);
+  --text-price--line-height: 1.1;
+  --text-price--letter-spacing: -0.02em;
+
+  /* --- Spacing scale (4 → 128) --------------------------------------------- */
+  --spacing: 0.25rem;
+
+  /* --- Radius -------------------------------------------------------------- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 2.25rem;
+  --radius-pill: 999px;
+
+  /* --- Motion -------------------------------------------------------------- */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --duration-fast: 200ms; /* micro-interaction        150–250ms */
+  --duration-base: 400ms; /* UI transition            300–500ms */
+  --duration-slow: 800ms; /* editorial reveal        600–1000ms */
+  --duration-cinematic: 1400ms; /* hero transition   1000–1800ms */
+  --duration-route: 2000ms; /* map / route draw      1200–2500ms */
+
+  /* --- Elevation (natural, never a hard drop shadow) ----------------------- */
+  --shadow-lift: 0 1px 2px rgb(10 9 8 / 0.06), 0 12px 32px -12px rgb(10 9 8 / 0.18);
+  --shadow-float: 0 2px 6px rgb(10 9 8 / 0.08), 0 32px 64px -24px rgb(10 9 8 / 0.32);
+}
+
+/* =============================================================================
+   SECTION THEMES
+   The page alternates between cinematic "night" sections and editorial "day"
+   sections. Components read semantic tokens only, so the same card renders
+   correctly in either context.
+   ============================================================================= */
+
+.theme-night {
+  --color-background: var(--color-ink-900);
+  --color-surface: var(--color-ink-800);
+  --color-surface-raised: var(--color-ink-700);
+  --color-text: var(--color-sand-50);
+  --color-text-strong: #ffffff;
+  --color-muted: #9d9791;
+  --color-border: rgb(251 248 242 / 0.12);
+  --color-border-strong: rgb(251 248 242 / 0.26);
+  --color-primary: var(--color-amber-400);
+  /* Amber is a light colour — text on it must be the charcoal, never white. */
+  --color-primary-contrast: var(--color-ink-900);
+  --color-secondary: var(--color-amber-200);
+  --color-accent: var(--color-sand-300);
+  --color-scrim: rgb(16 15 14 / 0.55);
+  color-scheme: dark;
+}
+
+:root,
+.theme-day {
+  --color-background: var(--color-sand-50);
+  --color-surface: #ffffff;
+  --color-surface-raised: var(--color-sand-100);
+  --color-text: var(--color-ink-700);
+  --color-text-strong: var(--color-ink-900);
+  --color-muted: #6e6862;
+  --color-border: rgb(43 42 41 / 0.12);
+  --color-border-strong: rgb(43 42 41 / 0.26);
+  /* On light surfaces the logo amber fails contrast, so the ramp steps down to
+     a shade of the same hue rather than switching to a different colour. */
+  --color-primary: var(--color-amber-700);
+  --color-primary-contrast: #ffffff;
+  --color-secondary: var(--color-amber-600);
+  --color-accent: var(--color-clay-400);
+  --color-scrim: rgb(16 15 14 / 0.4);
+  color-scheme: light;
+}
+
+.theme-sand {
+  --color-background: var(--color-sand-100);
+  --color-surface: var(--color-sand-50);
+  --color-surface-raised: #ffffff;
+  --color-text: var(--color-ink-700);
+  --color-text-strong: var(--color-ink-900);
+  --color-muted: #6e6862;
+  --color-border: rgb(43 42 41 / 0.12);
+  --color-border-strong: rgb(43 42 41 / 0.24);
+  --color-primary: var(--color-amber-700);
+  --color-primary-contrast: #ffffff;
+  --color-secondary: var(--color-amber-600);
+  --color-accent: var(--color-clay-400);
+  --color-scrim: rgb(16 15 14 / 0.4);
+  color-scheme: light;
+}
+
+/* Expose the semantic tokens to Tailwind utilities (bg-background, text-muted…) */
+@theme inline {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-text: var(--color-text);
+  --color-text-strong: var(--color-text-strong);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-primary: var(--color-primary);
+  --color-primary-contrast: var(--color-primary-contrast);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-scrim: var(--color-scrim);
+}
+
+/* =============================================================================
+   BASE
+   ============================================================================= */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    /* Lenis drives scrolling; the native behaviour is the no-JS fallback. */
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Guards every page against the horizontal-overflow class of bug that
+       parallax and horizontal-scroll sections are prone to. */
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    color: var(--color-text-strong);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+  }
+
+  /* Focus: always visible, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Skip link */
+  .skip-link {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    translate: -50% -120%;
+    z-index: 200;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    font-weight: 600;
+    transition: translate var(--duration-fast) var(--ease-expo);
+  }
+  .skip-link:focus-visible {
+    translate: -50% 0;
+  }
+
+  /* Minimum 44px touch targets on coarse pointers. */
+  @media (pointer: coarse) {
+    button,
+    [role="button"],
+    a[data-cta],
+    input,
+    select {
+      min-height: 44px;
+    }
+  }
+}
+
+/* =============================================================================
+   UTILITIES
+   ============================================================================= */
+
+@utility container-editorial {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+  max-width: 96rem;
+}
+
+@utility container-prose {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+  max-width: 46rem;
+}
+
+/* Fine 1px grain — stops large flat colour fields from banding and gives the
+   whole site a printed-paper quality. Pure CSS, no image request. */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+}
+@utility grain-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Text that reveals from behind a mask — the site's signature headline move. */
+@utility mask-line {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+}
+
+@utility edge-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+}
+
+/* Route lines that draw themselves. Used by the world-routes section and the
+   package itinerary map, so both speak the same visual language. */
+@utility route-draw {
+  stroke-dasharray: 240;
+  stroke-dashoffset: 240;
+  animation: musafir-route-draw var(--duration-route) var(--ease-expo) forwards;
+}
+
+/* Scrollbar-free horizontal rails */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   PLANE CURSOR
+   The system pointer is only hidden once the custom cursor has actually
+   mounted and decided it should run — so a touch device, a reduced-motion
+   user, or a failed hydration all keep a working pointer.
+   ============================================================================= */
+
+html.has-plane-cursor,
+html.has-plane-cursor * {
+  cursor: none !important;
+}
+
+.plane-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 260ms var(--ease-smooth);
+}
+
+.plane-cursor__plane,
+.plane-cursor__fav {
+  position: absolute;
+  display: block;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* Both assets are centred on the true pointer position. */
+  translate: -50% -50%;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, scale, rotate, filter;
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plane-cursor__plane {
+  /* Native 114x87 — kept at its exact aspect ratio. */
+  width: 42px;
+  height: 32px;
+  background-image: url("/cursor/plane.svg");
+}
+
+.plane-cursor__fav {
+  /* Native 173x206 — kept at its exact aspect ratio. */
+  width: 26px;
+  height: 31px;
+  background-image: url("/cursor/fav-logo.svg");
+}
+
+/* DEFAULT: plane sharp and present, fav logo collapsed away. */
+.plane-cursor[data-state="default"] .plane-cursor__plane {
+  opacity: 1;
+  scale: 1;
+  filter: blur(0);
+}
+.plane-cursor[data-state="default"] .plane-cursor__fav {
+  opacity: 0;
+  scale: 0.5;
+  rotate: -18deg;
+  filter: blur(2px);
+}
+
+/* HOVER: the plane shrinks, banks and blurs out as the fav logo scales up and
+   settles level. The two overlap for the whole transition, which is what sells
+   it as a transformation rather than a swap. */
+.plane-cursor[data-state="hover"] .plane-cursor__plane {
+  opacity: 0;
+  scale: 0.55;
+  filter: blur(3px);
+}
+.plane-cursor[data-state="hover"] .plane-cursor__fav {
+  opacity: 1;
+  scale: 1;
+  rotate: 0deg;
+  filter: blur(0) drop-shadow(0 0 10px rgb(255 180 3 / 0.55));
+  transition:
+    opacity 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    rotate 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Soft atmospheric glow, larger and softer on hover. */
+.plane-cursor__glow {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  translate: -50% -50%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 180 3 / 0.16) 0%, transparent 68%);
+  transition: scale 520ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms var(--ease-smooth);
+  scale: 1;
+  opacity: 0.7;
+}
+.plane-cursor[data-state="hover"] .plane-cursor__glow {
+  scale: 1.35;
+  opacity: 1;
+}
+
+.plane-cursor__trail {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease-smooth);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane-cursor {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   REDUCED MOTION
+   Every complex animation collapses to a plain fade or to nothing. Components
+   also check the preference in JS before building GSAP timelines; this block is
+   the belt-and-braces for anything purely declarative.
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Anything staged for a scroll reveal must still be readable. */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .motion-loop {
+    animation: none !important;
+  }
+}
+
+/* =============================================================================
+   KEYFRAMES
+   ============================================================================= */
+
+@keyframes musafir-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes musafir-scroll-cue {
+  0% {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(180%);
+    opacity: 0;
+  }
+}
+
+@keyframes musafir-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes musafir-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes musafir-route-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes musafir-pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* =============================================================================
+   ARCH CARDS
+   The selection shape used through the trip customiser — a rounded arch that
+   echoes the Musafir mark's tapered form rather than a plain rounded rect.
+   ============================================================================= */
+
+@utility arch {
+  border-radius: 999px 999px var(--radius-lg) var(--radius-lg);
+}
+
+@utility arch-media {
+  border-radius: 999px 999px var(--radius-md) var(--radius-md);
+}
+
+@keyframes musafir-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =============================================================================
+   PLAY SHAPE
+   The brand's signature silhouette — the rounded arrowhead from the Musafir
+   mark, supplied as Vector 1.svg. Applied as a mask rather than a clip-path so
+   it stretches to any card size and needs no per-instance SVG in the markup.
+
+   Served as a static file rather than an inline data URI: webpack's css-loader
+   tries to resolve url() contents as modules, and a raw SVG string trips it.
+   ============================================================================= */
+
+@utility play-shape {
+  -webkit-mask-image: url("/shapes/play-shape-mask.svg");
+  mask-image: url("/shapes/play-shape-mask.svg");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
