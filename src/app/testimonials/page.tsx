@@ -6,7 +6,7 @@ import { metadataFrom, reviewSchema } from "@/lib/seo";
 import { JsonLd } from "@/components/ui/Primitives";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Traveller Stories | Musafir Travels",
+  title: "Traveller Stories",
   description:
     "Reviews from Musafir Travels customers — published only after the trip, only where they are attached to a real booking, and only with the traveller's written permission.",
   canonical: "/testimonials",

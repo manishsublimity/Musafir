@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import "@/styles/cinema.css";
 
 /**
@@ -40,12 +40,19 @@ interface Props {
   title?: string;
   intro?: string;
   tags?: string[];
+  /**
+   * Rendered over the lower third of the hero. This is where the trip starter
+   * lives, so the first question the site asks is answered before the
+   * traveller has scrolled anywhere.
+   */
+  overlay?: ReactNode;
 }
 
 export function CinematicScrollHero({
   title = "MOSTAR",
   intro = "A stone arch, emerald water, and a compact old city made for slow mornings, late light, and one unforgettable crossing.",
   tags = ["Old Bridge", "Neretva River", "UNESCO old city"],
+  overlay,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -108,6 +115,9 @@ export function CinematicScrollHero({
       const frame2 = segmentInOut(smoothScroll, 560, 900, 1300, 1620);
       const frame3 = segmentInOut(smoothScroll, 1760, 2140, 2540, 2700);
       const progress = clamp(smoothScroll / 2700);
+      // The trip starter arrives once the bazaar panel has left, then holds for
+      // the rest of the rig so there is time to actually use it.
+      const starterIn = smoothstep(2720, 3080, smoothScroll);
       const introExit = smoothstep(90, 650, smoothScroll);
       const blurActive = clamp(frame2.active + frame3.active);
       const frame2Opacity = frame2.active * (1 - frame3.enter);
@@ -167,6 +177,9 @@ export function CinematicScrollHero({
       set("--intro-copy-opacity", (1 - introExit).toFixed(4));
       set("--panel2-opacity", panel2Opacity.toFixed(4));
       set("--panel2-y", `calc(-50% + ${(-frame2.exit * 86 + (1 - frame2.enter) * 58).toFixed(2)}px)`);
+      set("--starter-opacity", starterIn.toFixed(4));
+      set("--starter-y", `${((1 - starterIn) * 48).toFixed(2)}px`);
+      set("--starter-events", starterIn > 0.9 ? "auto" : "none");
       set("--panel3-opacity", panel3Opacity.toFixed(4));
       set("--panel3-y", `calc(-50% + ${(-frame3.exit * 86 + (1 - frame3.enter) * 58).toFixed(2)}px)`);
 
@@ -219,8 +232,29 @@ export function CinematicScrollHero({
             <div className="back-stack">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="scene-img back-img back-four" alt="" src={ASSET.backFour} />
+              {/* The bazaar layer is footage rather than a still, so the river
+                  keeps moving behind the story. Muted and looping — it is
+                  scenery, not content, so it never asks for sound and never
+                  needs controls. */}
+              <video
+                className="scene-img back-img back-bazaar motion-reduce:hidden"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                poster={ASSET.bazaar}
+                aria-hidden="true"
+              >
+                <source src="/videos/mostar-river.mp4" type="video/mp4" />
+              </video>
+              {/* Reduced motion keeps the original still. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="scene-img back-img back-bazaar" alt="" src={ASSET.bazaar} />
+              <img
+                className="scene-img back-img back-bazaar hidden motion-reduce:block"
+                alt=""
+                src={ASSET.bazaar}
+              />
             </div>
 
             <h1 className="hero-title">{title}</h1>
@@ -245,6 +279,8 @@ export function CinematicScrollHero({
               ))}
             </div>
           </section>
+
+          {overlay}
 
           <section className="story-panel story-panel-bridge" id="bridge" aria-label="Old Bridge details">
             <h2>The bridge is the city&rsquo;s compass.</h2>

@@ -7,7 +7,7 @@ import { metadataFrom } from "@/lib/seo";
 import { site } from "@/content/site";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Enquire | Musafir Travels",
+  title: "Enquire",
   description:
     "Tell us your dates, who is travelling and roughly what you want to spend. A trip designer comes back within one working day with a draft itinerary.",
   canonical: "/enquiry",

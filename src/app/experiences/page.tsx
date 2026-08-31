@@ -8,7 +8,7 @@ import { formatMoney, formatSeasonRanges } from "@/lib/format";
 import { metadataFrom } from "@/lib/seo";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Experiences | Musafir Travels",
+  title: "Experiences",
   description:
     "The individual days people remember — reef dives, scenic railways, desert nights and root-bridge treks — with honest notes on what each one actually takes.",
   canonical: "/experiences",

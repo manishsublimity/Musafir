@@ -21,48 +21,64 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  /** True when the content directly under the unscrolled nav is dark. */
-  const [overDarkHero, setOverDarkHero] = useState(true);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  /** True while the nav still sits over the page's hero media. */
+  const [overHero, setOverHero] = useState(false);
+  /** True when whatever is under the unscrolled nav is dark. */
+  const [overDarkHero, setOverDarkHero] = useState(false);
 
   /**
-   * The nav sits over the page rather than above it, so its own colours have to
-   * follow whatever is underneath. Rather than annotating every page, the top
-   * section's background luminance is measured on each route change — pages
-   * with a cinematic dark hero get cream text, editorial light pages get ink.
+   * The nav sits over the page rather than above it, so it has to know two
+   * things: whether it is still over the hero (transparent) or past it
+   * (solid), and whether what is underneath is dark or light.
+   *
+   * The switch point is the hero's own height rather than a fixed pixel
+   * threshold, so the bar stays transparent for exactly as long as there is
+   * hero behind it. Pages with no hero flip almost immediately.
    */
   useEffect(() => {
+    const first = () =>
+      document.querySelector<HTMLElement>("main > section, main > div, main > *");
+
+    let heroEnd = 0;
+
     const measure = () => {
-      const first = document.querySelector<HTMLElement>("main > *, main section");
-      if (!first) return;
+      const el = first();
+      if (!el) return;
 
-      const background = getComputedStyle(first).backgroundColor;
+      const height = el.getBoundingClientRect().height;
+      // A hero is a full-bleed opening section. Anything shorter than ~60vh is
+      // ordinary page content, so the bar should take its surface right away.
+      const isHero = height >= window.innerHeight * 0.6;
+      heroEnd = isHero ? height - 96 : 40;
+
+      const background = getComputedStyle(el).backgroundColor;
       const match = background.match(/rgba?\(([^)]+)\)/);
-      if (!match) return;
-
-      const parts = match[1].split(",").map((v) => parseFloat(v));
-      const [r, g, b] = parts;
-      const alpha = parts.length > 3 ? parts[3] : 1;
-      // A transparent top section means media is showing through, which on this
-      // site always means a dark cinematic hero.
-      if (alpha < 0.5) {
-        setOverDarkHero(true);
-        return;
+      if (match) {
+        const parts = match[1].split(",").map((v) => parseFloat(v));
+        const [r, g, b] = parts;
+        const alpha = parts.length > 3 ? parts[3] : 1;
+        const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        setOverDarkHero(alpha >= 0.5 && luminance < 0.5);
       }
-      const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-      setOverDarkHero(luminance < 0.5);
+      onScroll();
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > heroEnd);
+      setOverHero(y <= heroEnd);
     };
 
     measure();
-    // Re-measure after hydration settles, in case the first paint was a skeleton.
+    // Re-measure once hydration settles, in case the first paint was a skeleton.
     const id = window.setTimeout(measure, 300);
-    return () => window.clearTimeout(id);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -94,14 +110,16 @@ export function Nav() {
   return (
     <>
       <header
-        data-tone={scrolled || overDarkHero ? "dark" : "light"}
+        data-tone={overDarkHero && overHero ? "dark" : "light"}
         className={cx(
           "fixed inset-x-0 top-0 z-[100] transition-[background-color,backdrop-filter,box-shadow,border-color] duration-[--duration-base] ease-[--ease-expo]",
-          scrolled
-            ? "theme-sand border-b border-border bg-background/85 backdrop-blur-xl"
-            : overDarkHero
-              ? "theme-sand border-b border-transparent bg-gradient-to-b from-background/60 to-transparent"
-              : "theme-day border-b border-border/60 bg-background/80 backdrop-blur-xl",
+          overHero
+            ? // Fully transparent over the hero — no bar, no border, no blur.
+              cx(
+                "border-b border-transparent bg-transparent",
+                overDarkHero ? "theme-sand" : "theme-day",
+              )
+            : "theme-day border-b border-border/60 bg-background/85 backdrop-blur-xl",
         )}
       >
         <div
@@ -115,7 +133,7 @@ export function Nav() {
             aria-label={`${site.name} — home`}
             className="transition-opacity hover:opacity-80"
           >
-            <Logo compact={scrolled} tone={scrolled || overDarkHero ? "light" : "dark"} />
+            <Logo compact={scrolled} tone={overDarkHero && overHero ? "light" : "dark"} />
           </Link>
 
           <nav aria-label="Primary" className="hidden lg:block">

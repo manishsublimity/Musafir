@@ -7,7 +7,7 @@ import { metadataFrom } from "@/lib/seo";
 import { toPackageCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Plan My Trip | Musafir Travels",
+  title: "Plan My Trip",
   description:
     "Answer four questions — who you are travelling with, what you want from the trip, how long you have and your budget — and we will match you to journeys that actually fit.",
   canonical: "/plan-my-trip",

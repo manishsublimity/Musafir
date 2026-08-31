@@ -11,7 +11,7 @@ import { site } from "@/content/site";
 import { cx } from "@/lib/utils";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Visa Assistance for Indian Passport Holders | Musafir Travels",
+  title: "Visa Assistance for Indian Passport Holders",
   description:
     "Visa requirements for Indian passport holders by destination — entry type, permitted stay, documents and processing times, each with the official source and the date it was last verified.",
   canonical: "/visa",

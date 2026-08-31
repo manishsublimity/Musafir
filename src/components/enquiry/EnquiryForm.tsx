@@ -63,23 +63,55 @@ export function EnquiryForm({
   }));
 
   useEffect(() => {
+    // The hero trip starter encodes each room as "<adults>a<children>c", so a
+    // family in two rooms arrives as "2a1c,2a0c". Summing gives us the head
+    // count for the counters; the room split itself goes into the notes, since
+    // this form has no field for it and dropping it would lose a real answer.
+    const roomCodes = params.get("rooms")?.split(",").filter(Boolean) ?? [];
+    const heads = roomCodes.reduce(
+      (total, code) => {
+        const m = /^(\d+)a(\d+)c$/.exec(code);
+        return m
+          ? { adults: total.adults + Number(m[1]), children: total.children + Number(m[2]) }
+          : total;
+      },
+      { adults: 0, children: 0 },
+    );
+
+    // Duration arrives as a band ("6-8"), not a number of nights. We carry it
+    // as a note rather than computing a return date, because picking one date
+    // out of a range would be inventing an answer the traveller never gave.
+    const notes = [
+      params.get("cities") &&
+        `Cities I'd like to include: ${params
+          .get("cities")!
+          .split(",")
+          // Only the slug survives the URL, so title-case it back into
+          // something a trip designer reads as a place name.
+          .map((c) =>
+            (c.split(":").pop() ?? "")
+              .split("-")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" "),
+          )
+          .join(", ")}`,
+      roomCodes.length > 1 && `Rooms: ${roomCodes.length}`,
+      params.get("duration") && `Trip length: around ${params.get("duration")} days`,
+    ].filter(Boolean) as string[];
+
     setForm((prev) => ({
       ...prev,
       destinationSlug: params.get("destination") ?? prev.destinationSlug,
       packageSlug: params.get("package") ?? prev.packageSlug,
       startDate: params.get("date") ?? params.get("start") ?? prev.startDate,
-      adults: Number(params.get("travellers") ?? params.get("adults") ?? prev.adults) || prev.adults,
+      adults:
+        Number(params.get("travellers") ?? params.get("adults")) ||
+        (heads.adults > 0 ? heads.adults : prev.adults),
+      children: heads.adults > 0 ? heads.children : prev.children,
       style: params.get("style") ?? params.get("travelWith")?.toLowerCase() ?? prev.style,
       budgetBand: params.get("budget") ?? prev.budgetBand,
       interests: params.get("vibe")?.split(",").filter(Boolean).map((v) => v.toLowerCase()) ?? prev.interests,
-      message:
-        params.get("cities")
-          ? `Cities I'd like to include: ${params
-              .get("cities")!
-              .split(",")
-              .map((c) => c.split(":").pop())
-              .join(", ")}`
-          : prev.message,
+      message: notes.length ? notes.join("\n") : prev.message,
     }));
   }, [params]);
 

@@ -591,21 +591,33 @@ html.has-plane-cursor * {
 
 /* =============================================================================
    PLAY SHAPE
-   The brand's signature silhouette — the rounded arrowhead from the Musafir
-   mark, supplied as Vector 1.svg. Applied as a mask rather than a clip-path so
-   it stretches to any card size and needs no per-instance SVG in the markup.
+   The brand silhouette, taken from the two exported Figma paths rather than
+   approximated. `Vector 1` is the outer rim, `Vector 2` is the inner photo
+   window; both are baked into a shared 307x341 viewBox so the two masks align
+   exactly at the same box size, with no per-instance positioning to get wrong.
 
-   Served as a static file rather than an inline data URI: webpack's css-loader
-   tries to resolve url() contents as modules, and a raw SVG string trips it.
+   Masks rather than clip-path: a clip-path cannot be applied to a next/image
+   fill wrapper without also clipping its sizing box, and a border-radius
+   cannot follow an arrowhead.
+
+   Served as static files rather than inline data URIs: webpack's css-loader
+   tries to resolve url() contents as modules and a raw SVG string trips it.
    ============================================================================= */
 
-@utility play-shape {
-  -webkit-mask-image: url("/shapes/play-shape-mask.svg");
-  mask-image: url("/shapes/play-shape-mask.svg");
+@utility play-shape-outer {
+  -webkit-mask-image: url("/shapes/play-shape-outer.svg");
+  mask-image: url("/shapes/play-shape-outer.svg");
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
+}
+
+@utility play-shape-inner {
+  -webkit-mask-image: url("/shapes/play-shape-inner.svg");
+  mask-image: url("/shapes/play-shape-inner.svg");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }

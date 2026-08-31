@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ShapeCard } from "@/components/cards/ShapeCard";
 import { DottedPath, PinMark, PlayMark } from "@/components/ui/PlayMark";
 import { DatePicker } from "./DatePicker";
+import { RoomPicker, decodeRooms } from "./RoomPicker";
 import { STEPS, type StepDefinition, type StepOption } from "./steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
@@ -41,21 +42,39 @@ type Selection = Record<string, string[]>;
 export function CustomizeFlow({
   destinations,
   cities,
-  initialTravelWith,
+  prefilled,
 }: {
   destinations: DestinationCard[];
   cities: CityOption[];
-  /** Pre-selects step one so the homepage cards can deep-link into the flow. */
-  initialTravelWith?: string;
+  /** Answers already given — from the hero trip starter or a campaign link. */
+  prefilled?: Selection;
 }) {
   const router = useRouter();
-  const [index, setIndex] = useState(initialTravelWith ? 1 : 0);
   const [query, setQuery] = useState("");
-  const [selection, setSelection] = useState<Selection>(
-    initialTravelWith ? { travelWith: [initialTravelWith] } : {},
+  const [selection, setSelection] = useState<Selection>(prefilled ?? {});
+
+  // Open on the first question that has not been answered yet, so arriving
+  // from the hero resumes the flow instead of restarting it.
+  const [index, setIndex] = useState(() => {
+    const visible = STEPS.filter((s) => !s.when || s.when(prefilled ?? {}));
+    const firstUnanswered = visible.findIndex((s) => !(prefilled ?? {})[s.id]?.length);
+    return firstUnanswered === -1 ? visible.length - 1 : firstUnanswered;
+  });
+
+  /**
+   * Steps whose `when` guard passes for the current answers. Room allocation
+   * only applies to families and friend groups, so for a couple or a solo
+   * traveller it never appears — and the progress rail shows five steps, not
+   * six with one that silently skips.
+   */
+  const steps = useMemo(
+    () => STEPS.filter((s) => !s.when || s.when(selection)),
+    [selection],
   );
 
-  const step = STEPS[index];
+  // Guard against the visible list shrinking under the cursor.
+  const safeIndex = Math.min(index, steps.length - 1);
+  const step = steps[safeIndex];
   const chosenDestination = selection.destination?.[0];
 
   /** Options for the current step, from either the definition or CMS data. */
@@ -68,6 +87,7 @@ export function CustomizeFlow({
         scene: d.scene,
         image: d.image,
         imageAlt: d.alt,
+        video: d.video,
       }));
     }
     if (step.id === "cities") {
@@ -87,11 +107,14 @@ export function CustomizeFlow({
 
   const chosen = selection[step.id] ?? [];
   const canAdvance = step.optional || chosen.length > 0;
-  const isLast = index === STEPS.length - 1;
+  const isLast = safeIndex === steps.length - 1;
 
   /** Steps without artwork render as compact pills instead of shape cards. */
-  const isCompact = step.id === "duration";
-  const isDateStep = step.id === "date";
+  const isCompact = step.custom === undefined && step.id === "duration";
+  const isDateStep = step.custom === "date";
+  const isRoomsStep = step.custom === "rooms";
+  /** Only steps that cannot know when you are finished need a commit button. */
+  const needsCta = step.multi || Boolean(step.custom) || isLast;
 
   /** Season rings on the calendar come from the chosen destination's record. */
   const seasonMonths = destinations.find((d) => d.slug === chosenDestination)?.bestMonths;
@@ -114,6 +137,16 @@ export function CustomizeFlow({
       return { ...prev, [step.id]: [optionId] };
     });
     track("customize_option_changed", { step: step.id, value: optionId });
+
+    // A single-choice step has nothing left to decide once you have chosen, so
+    // it moves on by itself. The short delay lets the tick land first —
+    // advancing instantly makes it feel like the click missed.
+    if (!step.multi && !isLast) {
+      window.setTimeout(() => {
+        setQuery("");
+        setIndex((i) => Math.min(steps.length - 1, i + 1));
+      }, 320);
+    }
   }
 
   function advance() {
@@ -129,7 +162,7 @@ export function CustomizeFlow({
       return;
     }
     setQuery("");
-    setIndex((i) => Math.min(STEPS.length - 1, i + 1));
+    setIndex((i) => Math.min(steps.length - 1, i + 1));
   }
 
   function back() {
@@ -152,12 +185,12 @@ export function CustomizeFlow({
       <PinMark className="pointer-events-none absolute right-8 top-28 -z-10 size-8 text-primary/30 md:right-16 md:size-10" />
 
       <div className="container-editorial relative z-[2]">
-        <StepRail steps={STEPS} index={index} onJump={(i) => i < index && setIndex(i)} />
+        <StepRail steps={steps} index={safeIndex} onJump={(i) => i < index && setIndex(i)} />
 
         <div className="mt-12 text-center">
           <p className="flex items-center justify-center gap-3 text-caption font-semibold uppercase tracking-[0.16em] text-primary">
             <PlayMark className="size-4" />
-            Step {index + 1} of {STEPS.length}
+            Step {safeIndex + 1} of {steps.length}
           </p>
           <h1 className="mt-5 text-h1 text-text-strong">{step.question}</h1>
           {step.lede && (
@@ -192,7 +225,14 @@ export function CustomizeFlow({
           </div>
         )}
 
-        {isDateStep ? (
+        {isRoomsStep ? (
+          <RoomPicker
+            value={chosen}
+            onChange={(encoded) =>
+              setSelection((prev) => ({ ...prev, rooms: encoded }))
+            }
+          />
+        ) : isDateStep ? (
           <DatePicker
             value={chosen[0]}
             onChange={(isoDate) => {
@@ -239,6 +279,7 @@ export function CustomizeFlow({
                     onToggle={() => toggle(option.id)}
                     image={isCompact ? undefined : option.image}
                     imageAlt={option.imageAlt}
+                    video={isCompact ? undefined : option.video}
                   />
                 )}
               </li>
@@ -265,7 +306,14 @@ export function CustomizeFlow({
               </span>
               <span className="mt-0.5 block truncate text-label font-semibold text-text-strong">
                 {chosen.length
-                  ? isDateStep
+                  ? isRoomsStep
+                    ? (() => {
+                        const rooms = decodeRooms(chosen);
+                        const adults = rooms.reduce((n, r) => n + r.adults, 0);
+                        const kids = rooms.reduce((n, r) => n + r.children, 0);
+                        return `${rooms.length} ${rooms.length === 1 ? "room" : "rooms"} · ${adults} ${adults === 1 ? "adult" : "adults"}${kids ? `, ${kids} ${kids === 1 ? "child" : "children"}` : ""}`;
+                      })()
+                    : isDateStep
                     ? // A date is far more useful echoed back than "1 selected".
                       new Date(chosen[0]).toLocaleDateString("en-IN", {
                         weekday: "short",
@@ -276,7 +324,9 @@ export function CustomizeFlow({
                     : `${chosen.length} selected`
                   : step.optional
                     ? "Optional — skip if you are flexible"
-                    : "Pick one to continue"}
+                    : step.multi
+                      ? "Pick as many as you like"
+                      : "Pick one — we move on automatically"}
               </span>
             </span>
           </div>
@@ -291,6 +341,7 @@ export function CustomizeFlow({
                 Back
               </button>
             )}
+            {needsCta && (
             <button
               type="button"
               onClick={advance}
@@ -310,6 +361,7 @@ export function CustomizeFlow({
                 />
               </svg>
             </button>
+            )}
           </div>
         </div>
       </div>

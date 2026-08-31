@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CinematicScrollHero } from "@/components/home/CinematicScrollHero";
-import { WhosComingAlong } from "@/components/home/WhosComingAlong";
+import { HeroTripStarter, type HeroCityOption } from "@/components/home/HeroTripStarter";
 import { TripPlanner } from "@/components/home/TripPlanner";
 import { TrendingDestinations } from "@/components/home/TrendingDestinations";
 import { VisaFreeDestinations } from "@/components/home/VisaFreeDestinations";
@@ -67,6 +67,19 @@ export default function HomePage() {
     ]),
   );
 
+  // Cities come from the destination records, so the picker can only ever
+  // offer places that appear in a real itinerary.
+  const cities: HeroCityOption[] = getDestinations().flatMap((destination) =>
+    destination.cities
+      .filter((city) => city.nights === undefined || city.nights > 0)
+      .map((city) => ({
+        id: `${destination.slug}:${city.slug}`,
+        label: city.name,
+        destinationSlug: destination.slug,
+        blurb: city.blurb,
+      })),
+  );
+
   const reelPanels: ReelPanel[] = getFilmExperiences().map((experience) => ({
     slug: experience.slug,
     name: experience.name,
@@ -78,11 +91,14 @@ export default function HomePage() {
 
   return (
     <>
-      {/* 01 — Cinematic scroll hero */}
-      <CinematicScrollHero />
-
-      {/* 02 — Who's coming along (entry into the customiser) */}
-      <WhosComingAlong />
+      {/* 01 — Cinematic scroll hero, with the trip starter inside it */}
+      <CinematicScrollHero overlay={
+          <HeroTripStarter
+            key="hero-trip-starter"
+            destinations={allDestinations}
+            cities={cities}
+          />
+        } />
 
       {/* 03 — Trip planner */}
       <TripPlanner destinations={allDestinations} />

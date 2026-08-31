@@ -7,7 +7,7 @@ import { site } from "@/content/site";
 import type { Faq } from "@/lib/types";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Frequently Asked Questions | Musafir Travels",
+  title: "Frequently Asked Questions",
   description:
     "How booking with Musafir Travels works — quotes, payment, visas, insurance, changes, cancellations and what happens if something goes wrong while you are away.",
   canonical: "/faq",

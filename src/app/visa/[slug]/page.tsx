@@ -25,7 +25,7 @@ export async function generateMetadata({
   if (!destination?.visa) return {};
 
   return metadataFrom({
-    title: `${destination.name} Visa for Indians — ${ENTRY_TYPE_LABELS[destination.visa.entryType]} | Musafir Travels`,
+    title: `${destination.name} Visa for Indians — ${ENTRY_TYPE_LABELS[destination.visa.entryType]}`,
     description: `${destination.name} visa requirements for Indian passport holders: entry type, permitted stay, documents and processing time, with the official source and the date last verified.`,
     canonical: `/visa/${destination.slug}`,
     keywords: [

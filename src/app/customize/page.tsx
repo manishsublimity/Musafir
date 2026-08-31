@@ -5,7 +5,7 @@ import { toDestinationCard } from "@/lib/view-models";
 import { metadataFrom } from "@/lib/seo";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Customise your trip | Musafir Travels",
+  title: "Customise your trip",
   description:
     "Six short questions — who is travelling, where, what you like doing, how long you have and when. We come back with a real itinerary built around your answers.",
   canonical: "/customize",
@@ -16,7 +16,7 @@ export const metadata: Metadata = metadataFrom({
 export default async function CustomizePage({
   searchParams,
 }: {
-  searchParams: Promise<{ travelWith?: string; skipStep?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
   const destinations = getDestinations().map(toDestinationCard);
@@ -35,15 +35,24 @@ export default async function CustomizePage({
       })),
   );
 
-  // `skipStep` mirrors the query shape the reference flow uses, so an existing
-  // campaign link lands on the right step rather than 404ing.
-  const initial = params.travelWith ?? params.skipStep;
+  // Answers arrive from the hero trip starter (and from campaign links, which
+  // use `skipStep`). Anything already answered is carried in so the traveller
+  // resumes rather than starting over.
+  const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+  const list = (v: string | string[] | undefined) =>
+    one(v)?.split(",").filter(Boolean) ?? undefined;
 
-  return (
-    <CustomizeFlow
-      destinations={destinations}
-      cities={cities}
-      initialTravelWith={initial?.toUpperCase()}
-    />
-  );
+  const prefilled: Record<string, string[]> = {};
+  for (const key of ["travelWith", "rooms", "destination", "vibe", "duration", "date", "cities"]) {
+    const values = list(params[key]);
+    if (values?.length) prefilled[key] = values;
+  }
+
+  const skip = one(params.skipStep);
+  if (skip && !prefilled.travelWith) prefilled.travelWith = [skip.toUpperCase()];
+  if (prefilled.travelWith) {
+    prefilled.travelWith = prefilled.travelWith.map((v) => v.toUpperCase());
+  }
+
+  return <CustomizeFlow destinations={destinations} cities={cities} prefilled={prefilled} />;
 }

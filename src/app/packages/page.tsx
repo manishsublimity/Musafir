@@ -6,7 +6,7 @@ import { metadataFrom } from "@/lib/seo";
 import { toPackageCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom({
-  title: "All Tour Packages | Musafir Travels",
+  title: "All Tour Packages",
   description:
     "Every Musafir Travels holiday package — international and domestic, 3 to 13 days, with day-by-day itineraries, transparent inclusions and prices that can be customised.",
   canonical: "/packages",

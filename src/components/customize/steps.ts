@@ -10,11 +10,15 @@ import type { SceneArchetype } from "@/lib/types";
 
 export type StepId =
   | "travelWith"
+  | "rooms"
   | "destination"
   | "vibe"
   | "date"
   | "duration"
   | "cities";
+
+/** What the traveller has answered so far, keyed by step id. */
+export type Selection = Record<string, string[]>;
 
 export interface StepOption {
   id: string;
@@ -27,6 +31,8 @@ export interface StepOption {
   imageAlt?: string;
   /** Small badge under the card, e.g. "Most picked". */
   note?: string;
+  /** Short clip played on hover. Falls back to a slow zoom when absent. */
+  video?: string;
 }
 
 export interface StepDefinition {
@@ -43,7 +49,18 @@ export interface StepDefinition {
   /** Renders a search field above the options. */
   searchable?: boolean;
   searchPlaceholder?: string;
+  /**
+   * Steps that only apply to some answers. Room allocation is meaningless for
+   * a solo traveller and for a couple sharing one room, so it is only asked of
+   * families and groups of friends.
+   */
+  when?: (selection: Selection) => boolean;
+  /** Rendered by a bespoke component rather than the option grid. */
+  custom?: "date" | "rooms";
 }
+
+/** Party types that actually need to divide people across rooms. */
+const NEEDS_ROOMS = ["FAMILY", "FRIENDS"];
 
 export const TRAVEL_WITH: StepOption[] = [
   { id: "COUPLE", label: "Couple", blurb: "Romantic escapes made unforgettable", scene: "island", image: "/images/couple.png", imageAlt: "A couple on a coastal viewpoint at golden hour" },
@@ -86,6 +103,15 @@ export const STEPS: StepDefinition[] = [
     options: TRAVEL_WITH,
   },
   {
+    id: "rooms",
+    question: "How many rooms does your group need?",
+    lede: "Split the group however you actually want to sleep. You can change this later.",
+    multi: false,
+    cta: "Choose your destination",
+    custom: "rooms",
+    when: (selection) => NEEDS_ROOMS.includes(selection.travelWith?.[0] ?? ""),
+  },
+  {
     id: "destination",
     question: "Where do you want to go?",
     lede: "Pick one to start. You can change it at any point.",
@@ -117,6 +143,7 @@ export const STEPS: StepDefinition[] = [
     multi: false,
     cta: "Choose your cities",
     optional: true,
+    custom: "date",
   },
   {
     id: "cities",

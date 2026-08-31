@@ -7,7 +7,7 @@ import { toDestinationCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom(
   {
-    title: "All Destinations | Musafir Travels",
+    title: "All Destinations",
     description:
       "Every destination Musafir Travels designs trips to — across Asia, Europe, the Middle East, Africa, Oceania and India. Filter by region, style, duration, budget, season and visa.",
     canonical: "/destinations",

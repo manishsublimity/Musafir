@@ -32,7 +32,7 @@ export async function generateMetadata({
     : record.startingPrice.amount;
 
   return metadataFrom({
-    title: `${record.name} Packages from ₹${from.toLocaleString("en-IN")} | Musafir Travels`,
+    title: `${record.name} Packages from ₹${from.toLocaleString("en-IN")}`,
     description: `${packages.length} ${record.name} holiday packages with day-by-day itineraries, flights, hotels and transfers. Ideal duration ${record.idealDurationDays[0]}–${record.idealDurationDays[1]} days.`,
     canonical: `/packages/${record.slug}`,
     keywords: [`${record.name.toLowerCase()} packages`, `${record.name.toLowerCase()} tour package price`],

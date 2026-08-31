@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/format";
 import { metadataFrom } from "@/lib/seo";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Travel Guides | Musafir Travels",
+  title: "Travel Guides",
   description:
     "Planning notes from the trips we design — seasons, timings, realistic budgets, visa timelines and the things that commonly go wrong.",
   canonical: "/travel-guides",

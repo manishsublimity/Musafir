@@ -6,7 +6,7 @@ import { metadataFrom } from "@/lib/seo";
 import { toDestinationCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom({
-  title: "International Holidays from India | Musafir Travels",
+  title: "International Holidays from India",
   description:
     "International holiday packages from India across Asia, Europe, the Middle East, Africa and Oceania — with visa guidance, realistic budgets and day-by-day itineraries.",
   canonical: "/international-holidays",

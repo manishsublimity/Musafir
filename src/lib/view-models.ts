@@ -25,6 +25,8 @@ export interface DestinationCard {
   palette?: ScenePalette;
   /** Real photograph, when the CMS has one for this destination. */
   image?: string;
+  /** Short muted clip played on card hover, when one has been supplied. */
+  video?: string;
   alt: string;
   durationLabel: string;
   seasonLabel: string;
@@ -51,6 +53,7 @@ export function toDestinationCard(destination: Destination): DestinationCard {
     scene: destination.hero.scene ?? "island",
     palette: destination.hero.palette,
     image: destination.hero.src,
+    video: destination.hero.video?.mp4,
     alt: destination.hero.alt,
     durationLabel: `${destination.idealDurationDays[0]}–${destination.idealDurationDays[1]} days`,
     seasonLabel: formatSeasonRanges(destination.bestMonths),

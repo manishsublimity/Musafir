@@ -9,7 +9,7 @@ import { metadataFrom } from "@/lib/seo";
 import { toPackageCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Honeymoon Packages | Musafir Travels",
+  title: "Honeymoon Packages",
   description:
     "Honeymoon packages to the Maldives, Bali, Mauritius, Switzerland, Kerala and more — private-pool villas, overwater stays and the three details that actually decide how the trip feels.",
   canonical: "/honeymoon",

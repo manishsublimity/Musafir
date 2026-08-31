@@ -6,7 +6,7 @@ import { metadataFrom } from "@/lib/seo";
 import { toDestinationCard } from "@/lib/view-models";
 
 export const metadata: Metadata = metadataFrom({
-  title: "Domestic Holidays in India | Musafir Travels",
+  title: "Domestic Holidays in India",
   description:
     "Holidays within India — Kashmir, Ladakh, Kerala, Rajasthan, Meghalaya, Sikkim, Goa and the Andamans. No visa, no currency exchange, and landscapes that hold their own anywhere.",
   canonical: "/domestic-holidays",

@@ -46,12 +46,18 @@ export function DatePicker({
   value,
   onChange,
   bestMonths,
+  compact = false,
 }: {
   /** ISO yyyy-mm-dd, or empty. */
   value?: string;
   onChange: (isoDate: string) => void;
   /** Month keys the destination is actually good in. */
   bestMonths?: string[];
+  /**
+   * One month instead of three, for the hero panel — three months over a
+   * photograph is more calendar than the space can carry honestly.
+   */
+  compact?: boolean;
 }) {
   const today = useMemo(() => {
     const d = new Date();
@@ -62,11 +68,11 @@ export function DatePicker({
 
   const months = useMemo(
     () =>
-      Array.from({ length: VISIBLE }, (_, i) => {
+      Array.from({ length: compact ? 1 : VISIBLE }, (_, i) => {
         const d = new Date(cursor.getFullYear(), cursor.getMonth() + i, 1);
         return { year: d.getFullYear(), month: d.getMonth() };
       }),
-    [cursor],
+    [cursor, compact],
   );
 
   // Do not let the traveller page back before the current month.
@@ -79,7 +85,13 @@ export function DatePicker({
   const hasSeasonData = Boolean(bestMonths?.length);
 
   return (
-    <div className="mx-auto mt-12 max-w-5xl rounded-lg border border-border bg-surface p-5 md:p-8">
+    <div
+      className={
+        compact
+          ? "mx-auto w-full max-w-md"
+          : "mx-auto mt-12 max-w-5xl rounded-lg border border-border bg-surface p-5 md:p-8"
+      }
+    >
       {/* --- header --- */}
       <div className="flex items-center justify-between gap-4">
         <button
@@ -94,7 +106,7 @@ export function DatePicker({
           </svg>
         </button>
 
-        <div className="grid flex-1 gap-6 lg:grid-cols-3">
+        <div className={compact ? "flex-1" : "grid flex-1 gap-6 lg:grid-cols-3"}>
           {months.map((m, i) => (
             <p
               key={`${m.year}-${m.month}`}
@@ -121,7 +133,7 @@ export function DatePicker({
       </div>
 
       {/* --- month grids --- */}
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+      <div className={compact ? "mt-5" : "mt-8 grid gap-8 lg:grid-cols-3"}>
         {months.map((m, monthIndex) => (
           <MonthGrid
             key={`${m.year}-${m.month}`}
@@ -150,10 +162,12 @@ export function DatePicker({
         </div>
       )}
 
-      <p className="mt-5 text-center text-caption text-muted">
-        Season guidance comes from the destination&rsquo;s own best-travel months. Exact fares and
-        availability are confirmed when we quote.
-      </p>
+      {!compact && (
+        <p className="mt-5 text-center text-caption text-muted">
+          Season guidance comes from the destination&rsquo;s own best-travel months. Exact fares and
+          availability are confirmed when we quote.
+        </p>
+      )}
     </div>
   );
 }

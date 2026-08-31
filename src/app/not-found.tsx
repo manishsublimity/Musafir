@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { getTrendingDestinations } from "@/lib/cms";
 
 export const metadata = {
-  title: "Page not found | Musafir Travels",
+  title: "Page not found",
   robots: { index: false, follow: true },
 };
 
