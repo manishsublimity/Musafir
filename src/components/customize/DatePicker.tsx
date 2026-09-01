@@ -42,11 +42,48 @@ function iso(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/** Matches RoomPicker: cream on `/customize`, frosted glass over the hero. */
+export type DatePickerTone = "surface" | "glass";
+
+const TONE = {
+  surface: {
+    shell: "rounded-lg border border-border bg-surface p-5 md:p-8",
+    nav: "border-border text-text hover:border-primary hover:text-primary",
+    month: "text-text-strong",
+    weekday: "text-muted",
+    day: "text-text",
+    past: "text-muted/35",
+    hover: "hover:bg-primary/10",
+    selected: "border-primary bg-primary text-primary-contrast",
+    inSeason: "border-secondary",
+    offSeason: "border-accent/60",
+    rule: "border-border",
+    legend: "text-muted",
+  },
+  glass: {
+    shell: "rounded-2xl border border-sand-50/18 bg-ink-900/62 p-4 shadow-[0_18px_50px_-12px_rgb(16_15_14/0.6)] md:p-5",
+    nav: "border-sand-50/35 text-sand-50 hover:border-amber-400 hover:text-amber-300",
+    month: "text-sand-50",
+    weekday: "text-sand-100/70",
+    day: "text-sand-50",
+    past: "text-sand-50/25",
+    hover: "hover:bg-sand-50/15",
+    selected: "border-amber-400 bg-amber-400 text-ink-900",
+    inSeason: "border-sand-50/45",
+    offSeason: "border-sand-50/20",
+    rule: "border-sand-50/15",
+    legend: "text-sand-100/80",
+  },
+} as const;
+
+type Tone = (typeof TONE)[DatePickerTone];
+
 export function DatePicker({
   value,
   onChange,
   bestMonths,
   compact = false,
+  tone = "surface",
 }: {
   /** ISO yyyy-mm-dd, or empty. */
   value?: string;
@@ -58,7 +95,9 @@ export function DatePicker({
    * photograph is more calendar than the space can carry honestly.
    */
   compact?: boolean;
+  tone?: DatePickerTone;
 }) {
+  const t = TONE[tone];
   const today = useMemo(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -86,11 +125,15 @@ export function DatePicker({
 
   return (
     <div
-      className={
-        compact
-          ? "mx-auto w-full max-w-md"
-          : "mx-auto mt-12 max-w-5xl rounded-lg border border-border bg-surface p-5 md:p-8"
-      }
+      className={cx(
+        compact ? "mx-auto w-full max-w-md" : "mx-auto mt-12 max-w-5xl",
+        // Over photography the calendar always needs its own surface, compact
+        // or not — a bare grid of dates on open footage is unreadable at any
+        // scrim strength. On the standalone page the shell is only for the
+        // full three-month view; the compact one there sits on the page's own
+        // surface already.
+        (t === TONE.glass || !compact) && t.shell,
+      )}
     >
       {/* --- header --- */}
       <div className="flex items-center justify-between gap-4">
@@ -99,7 +142,7 @@ export function DatePicker({
           onClick={() => shift(-1)}
           disabled={atStart}
           aria-label="Previous month"
-          className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-text transition-colors duration-[--duration-fast] hover:border-primary hover:text-primary disabled:pointer-events-none disabled:opacity-30"
+          className={cx("grid size-10 shrink-0 place-items-center rounded-full border transition-colors duration-[--duration-fast] disabled:pointer-events-none disabled:opacity-30", t.nav)}
         >
           <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
             <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -111,7 +154,7 @@ export function DatePicker({
             <p
               key={`${m.year}-${m.month}`}
               className={cx(
-                "text-center text-h3 font-semibold text-text-strong",
+                "text-center text-h3 font-semibold", t.month,
                 i > 0 && "hidden lg:block",
               )}
             >
@@ -124,7 +167,7 @@ export function DatePicker({
           type="button"
           onClick={() => shift(1)}
           aria-label="Next month"
-          className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-text transition-colors duration-[--duration-fast] hover:border-primary hover:text-primary"
+          className={cx("grid size-10 shrink-0 place-items-center rounded-full border transition-colors duration-[--duration-fast]", t.nav)}
         >
           <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
             <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -143,6 +186,7 @@ export function DatePicker({
             value={value}
             onChange={onChange}
             bestMonths={bestMonths}
+            t={t}
             className={monthIndex > 0 ? "hidden lg:block" : undefined}
           />
         ))}
@@ -150,13 +194,13 @@ export function DatePicker({
 
       {/* --- legend --- */}
       {hasSeasonData && (
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-8 border-t border-border pt-6">
-          <p className="flex items-center gap-2.5 text-label text-muted">
-            <span aria-hidden="true" className="size-5 rounded-full border-2 border-secondary" />
+        <div className={cx("mt-6 flex flex-wrap items-center justify-center gap-8 border-t pt-5", t.rule)}>
+          <p className={cx("flex items-center gap-2.5 text-label", t.legend)}>
+            <span aria-hidden="true" className={cx("size-5 rounded-full border-2", t.inSeason)} />
             Good season
           </p>
-          <p className="flex items-center gap-2.5 text-label text-muted">
-            <span aria-hidden="true" className="size-5 rounded-full border-2 border-accent" />
+          <p className={cx("flex items-center gap-2.5 text-label", t.legend)}>
+            <span aria-hidden="true" className={cx("size-5 rounded-full border-2", t.offSeason)} />
             Off season
           </p>
         </div>
@@ -179,6 +223,7 @@ function MonthGrid({
   value,
   onChange,
   bestMonths,
+  t,
   className,
 }: {
   year: number;
@@ -187,6 +232,7 @@ function MonthGrid({
   value?: string;
   onChange: (isoDate: string) => void;
   bestMonths?: string[];
+  t: Tone;
   className?: string;
 }) {
   const total = daysInMonth(year, month);
@@ -205,7 +251,7 @@ function MonthGrid({
           <div
             key={day}
             role="columnheader"
-            className="pb-2 text-center text-caption font-medium uppercase tracking-[0.06em] text-muted"
+            className={cx("pb-2 text-center text-caption font-medium uppercase tracking-[0.06em]", t.weekday)}
           >
             {day}
           </div>
@@ -234,16 +280,14 @@ function MonthGrid({
                 aria-pressed={isSelected}
                 className={cx(
                   "grid size-9 place-items-center rounded-full text-label tabular-nums transition-[background-color,border-color,color] duration-[--duration-fast]",
-                  isPast && "cursor-not-allowed text-muted/35",
-                  !isPast && !isSelected && "border-2 hover:bg-primary/10",
+                  isPast && cx("cursor-not-allowed", t.past),
+                  !isPast && !isSelected && cx("border-2", t.hover),
                   !isPast && !isSelected && hasSeasonData
-                    ? inSeason
-                      ? "border-secondary text-text"
-                      : "border-accent/60 text-text"
+                    ? cx(inSeason ? t.inSeason : t.offSeason, t.day)
                     : !isPast && !isSelected
-                      ? "border-transparent text-text"
+                      ? cx("border-transparent", t.day)
                       : "",
-                  isSelected && "border-2 border-primary bg-primary font-semibold text-primary-contrast",
+                  isSelected && cx("border-2 font-semibold", t.selected),
                 )}
               >
                 {day}

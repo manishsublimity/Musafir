@@ -451,7 +451,15 @@
   bottom: clamp(24px, 4.5vh, 60px);
   opacity: var(--starter-opacity, 0);
   transform: translate3d(0, var(--starter-y, 48px), 0);
-  will-change: transform, opacity;
+  /* Deliberately NOT `will-change: opacity`. Promising a change to opacity
+     makes this element a backdrop root, and a backdrop root has nothing
+     painted behind it — which silently kills `backdrop-filter` on the frosted
+     panels inside, so the room picker and the calendar sample an empty
+     backdrop and come out unblurred over the footage. `transform` alone does
+     not create one, so the hint stays for the part that actually moves every
+     frame. Mid-fade the opacity is below 1 and the glass flattens for those
+     few hundred milliseconds, which nobody sees while it is arriving. */
+  will-change: transform;
   /* Invisible until it has actually arrived, so it never eats clicks meant for
      the story panels underneath. */
   pointer-events: var(--starter-events, none);

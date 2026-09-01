@@ -36,13 +36,69 @@ export function decodeRooms(values: string[] | undefined): Room[] {
   });
 }
 
+/**
+ * Two looks, because this control lives in two very different places. On
+ * `/customize` it sits on the page's own cream surface. In the hero it sits
+ * over photography, where a solid cream card reads as a form that was pasted
+ * onto the picture — so there it becomes frosted glass and the type goes
+ * light, matching the rest of the starter instead of interrupting it.
+ */
+export type RoomPickerTone = "surface" | "glass";
+
+const TONE = {
+  surface: {
+    wrap: "mx-auto mt-12 w-full max-w-xl",
+    card: "overflow-hidden rounded-lg border border-border bg-surface",
+    head: "border-b border-border bg-surface-raised",
+    headText: "text-primary",
+    divide: "divide-y divide-[--color-border]",
+    label: "text-text-strong",
+    hint: "text-muted",
+    value: "text-text-strong",
+    remove: "text-muted hover:text-accent",
+    add: "border-dashed border-border-strong text-primary hover:border-primary hover:bg-primary/5",
+    total: "text-muted",
+    stepIdle: "border-border-strong text-text hover:border-primary hover:bg-primary/10 hover:text-primary",
+    stepOff: "border-border text-muted/40",
+  },
+  /**
+   * Note the fill does the work here, not `backdrop-filter`. Blur would be
+   * the nicer effect, but the starter's step-slide animates opacity, which
+   * makes its panel a backdrop root — and a backdrop root has nothing painted
+   * behind it to sample, so the blur silently does nothing. Relying on it
+   * would also mean any future opacity animation could break legibility
+   * without anyone noticing, so the panel is simply opaque enough to read.
+   */
+  glass: {
+    // One panel holds the rooms, the add button and the total. Splitting them
+    // left the button and the summary sitting on bare footage while only the
+    // rooms had a surface, which read as three unrelated pieces.
+    wrap: "mx-auto w-full max-w-lg rounded-2xl border border-sand-50/18 bg-ink-900/62 p-3.5 shadow-[0_18px_50px_-12px_rgb(16_15_14/0.6)]",
+    card: "overflow-hidden rounded-xl border border-sand-50/12 bg-sand-50/[0.05]",
+    head: "border-b border-sand-50/12 bg-sand-50/[0.05]",
+    headText: "text-amber-300",
+    divide: "divide-y divide-[rgb(255_255_255/0.12)]",
+    label: "text-sand-50",
+    hint: "text-sand-100/70",
+    value: "text-sand-50",
+    remove: "text-sand-100/70 hover:text-amber-300",
+    add: "border-dashed border-sand-50/30 text-sand-50 hover:border-amber-400 hover:bg-sand-50/10",
+    total: "text-sand-100/80",
+    stepIdle: "border-sand-50/35 text-sand-50 hover:border-amber-400 hover:bg-amber-400/15 hover:text-amber-300",
+    stepOff: "border-sand-50/15 text-sand-50/30",
+  },
+} as const;
+
 export function RoomPicker({
   value,
   onChange,
+  tone = "surface",
 }: {
   value?: string[];
   onChange: (encoded: string[]) => void;
+  tone?: RoomPickerTone;
 }) {
+  const t = TONE[tone];
   const [rooms, setRooms] = useState<Room[]>(() => decodeRooms(value));
 
   // Publish upward whenever the allocation changes, so the sticky bar summary
@@ -71,15 +127,15 @@ export function RoomPicker({
     );
 
   return (
-    <div className="mx-auto mt-12 w-full max-w-xl">
-      <ul className="space-y-4">
+    <div className={t.wrap}>
+      <ul className="space-y-3.5">
         {rooms.map((room, index) => (
           <li
             key={index}
-            className="overflow-hidden rounded-lg border border-border bg-surface"
+            className={t.card}
           >
-            <div className="flex items-center justify-between gap-4 border-b border-border bg-surface-raised px-6 py-4">
-              <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.14em] text-primary">
+            <div className={cx("flex items-center justify-between gap-4 px-5 py-3.5", t.head)}>
+              <p className={cx("flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.14em]", t.headText)}>
                 <PlayMark className="size-3.5" />
                 Room {index + 1}
               </p>
@@ -87,15 +143,16 @@ export function RoomPicker({
                 <button
                   type="button"
                   onClick={() => setRooms((prev) => prev.filter((_, i) => i !== index))}
-                  className="text-label font-semibold text-muted underline underline-offset-4 transition-colors hover:text-accent"
+                  className={cx("text-label font-semibold underline underline-offset-4 transition-colors", t.remove)}
                 >
                   Remove
                 </button>
               )}
             </div>
 
-            <div className="divide-y divide-[--color-border]">
+            <div className={t.divide}>
               <Row
+                t={t}
                 label="Adults"
                 hint="12 yrs and over"
                 value={room.adults}
@@ -105,6 +162,7 @@ export function RoomPicker({
                 canInc={room.adults + room.children < MAX_PER_ROOM}
               />
               <Row
+                t={t}
                 label="Children"
                 hint="0 to 11 yrs"
                 value={room.children}
@@ -122,7 +180,7 @@ export function RoomPicker({
         <button
           type="button"
           onClick={() => setRooms((prev) => [...prev, { adults: 2, children: 0 }])}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong px-5 py-4 text-label font-semibold text-primary transition-colors duration-[--duration-fast] hover:border-primary hover:bg-primary/5"
+          className={cx("mt-3.5 flex w-full items-center justify-center gap-2 rounded-xl border px-5 py-3.5 text-label font-semibold transition-colors duration-[--duration-fast]", t.add)}
         >
           <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -131,7 +189,7 @@ export function RoomPicker({
         </button>
       )}
 
-      <p aria-live="polite" className="mt-6 text-center text-label text-muted">
+      <p aria-live="polite" className={cx("mt-5 text-center text-label", t.total)}>
         {rooms.length} {rooms.length === 1 ? "room" : "rooms"} · {totalAdults}{" "}
         {totalAdults === 1 ? "adult" : "adults"}
         {totalChildren > 0 && `, ${totalChildren} ${totalChildren === 1 ? "child" : "children"}`}
@@ -140,7 +198,10 @@ export function RoomPicker({
   );
 }
 
+type Tone = (typeof TONE)[RoomPickerTone];
+
 function Row({
+  t,
   label,
   hint,
   value,
@@ -149,6 +210,7 @@ function Row({
   canDec,
   canInc,
 }: {
+  t: Tone;
   label: string;
   hint: string;
   value: number;
@@ -158,20 +220,20 @@ function Row({
   canInc: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-6 px-6 py-5">
-      <p className="min-w-0">
-        <span className="block font-semibold text-text-strong">{label}</span>
-        <span className="mt-0.5 block text-caption text-muted">{hint}</span>
+    <div className="flex items-center justify-between gap-6 px-5 py-4">
+      <p className="min-w-0 text-left">
+        <span className={cx("block font-semibold", t.label)}>{label}</span>
+        <span className={cx("mt-0.5 block text-caption", t.hint)}>{hint}</span>
       </p>
 
       <div className="flex shrink-0 items-center gap-4">
-        <Step onClick={onDec} disabled={!canDec} label={`One fewer ${label.toLowerCase()}`}>
+        <Step t={t} onClick={onDec} disabled={!canDec} label={`One fewer ${label.toLowerCase()}`}>
           <path d="M5 12h14" />
         </Step>
-        <output className="w-6 text-center text-lede font-semibold tabular-nums text-text-strong">
+        <output className={cx("w-6 text-center text-lede font-semibold tabular-nums", t.value)}>
           {value}
         </output>
-        <Step onClick={onInc} disabled={!canInc} label={`One more ${label.toLowerCase()}`}>
+        <Step t={t} onClick={onInc} disabled={!canInc} label={`One more ${label.toLowerCase()}`}>
           <path d="M12 5v14M5 12h14" />
         </Step>
       </div>
@@ -180,11 +242,13 @@ function Row({
 }
 
 function Step({
+  t,
   children,
   onClick,
   disabled,
   label,
 }: {
+  t: Tone;
   children: React.ReactNode;
   onClick: () => void;
   disabled: boolean;
@@ -198,9 +262,7 @@ function Step({
       aria-label={label}
       className={cx(
         "grid size-10 place-items-center rounded-full border transition-colors duration-[--duration-fast]",
-        disabled
-          ? "cursor-not-allowed border-border text-muted/40"
-          : "border-border-strong text-text hover:border-primary hover:bg-primary/10 hover:text-primary",
+        disabled ? cx("cursor-not-allowed", t.stepOff) : t.stepIdle,
       )}
     >
       <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">

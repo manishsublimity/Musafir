@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Scene } from "@/components/media/Scene";
@@ -11,7 +11,7 @@ import { STEPS, type StepOption } from "@/components/customize/steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
 import { AnimatePresence } from "motion/react";
-import { CharacterStage } from "@/components/character/CharacterStage";
+import { CharacterStage, COLUMN } from "@/components/character/CharacterStage";
 import { SoloSelector } from "@/components/character/SoloSelector";
 import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
@@ -170,13 +170,22 @@ export function HeroTripStarter({
           phone there is no gutter to stand in. */}
       <CharacterStage
         character={character}
-        className="pointer-events-none absolute bottom-[19%] left-[3vw] z-[11] hidden lg:block"
+        className="pointer-events-none absolute bottom-[19%] left-0 z-[11] hidden items-end justify-center lg:flex"
       />
 
-      <section aria-label="Start your trip" className="hero-trip-starter" data-direction={direction}>
+      <section
+        aria-label="Start your trip"
+        className="hero-trip-starter"
+        data-direction={direction}
+        // The character stands in a column at the left; the content is padded
+        // clear of it so the two can never overlap. Both read the same
+        // constant, so the reservation cannot drift from the figure that sits
+        // in it. Below lg there is no character, so there is nothing to clear.
+        style={{ "--character-column": character ? `${COLUMN[character]}px` : "0px" } as CSSProperties}
+      >
         {/* Full-bleed rather than boxed: the questions sit straight on the
             footage, held legible by the stage's foot gradient instead of a card. */}
-        <div className="w-full px-5 text-center md:px-10">
+        <div className="w-full px-5 text-center md:px-10 lg:pl-[calc(var(--character-column)+2.5rem)]">
           {/* --- header --- */}
           <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 drop-shadow-[0_1px_10px_rgb(16_15_14/0.7)]">
             <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
@@ -218,13 +227,16 @@ export function HeroTripStarter({
               {step.question}
             </h2>
 
-            {/* The calendar and the room steppers still need a surface of their
-                own — dates on open footage are unreadable at any scrim strength.
-                The card rails sit straight on the picture. */}
+            {/* The room steppers and the calendar need a surface, but a solid
+                cream card over the footage reads as a form pasted onto the
+                picture. Frosted glass instead: it still lifts the control off
+                the scene, and it belongs to the same family as the rest of the
+                starter rather than interrupting it. */}
             {isRooms || isDate ? (
-              <div className="theme-day mx-auto mt-4 max-h-[46vh] w-full max-w-xl overflow-y-auto rounded-lg bg-background p-4 text-left text-text md:p-5">
+              <div className="mx-auto mt-4 max-h-[46vh] w-full max-w-lg overflow-y-auto text-left">
                 {isRooms ? (
                   <RoomPicker
+                    tone="glass"
                     value={chosen}
                     onChange={(encoded) =>
                       setSelection((prev) => ({ ...prev, rooms: encoded }))
@@ -233,6 +245,7 @@ export function HeroTripStarter({
                 ) : (
                   <DatePicker
                     compact
+                    tone="glass"
                     value={chosen[0]}
                     bestMonths={seasonMonths}
                     onChange={(isoDate) =>
