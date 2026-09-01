@@ -14,6 +14,7 @@ import {
   InteractiveCharacter,
   COUPLE_CHARACTER,
   FAMILY_CHARACTER,
+  SOLO_CHARACTER,
   type CharacterConfig,
 } from "@/components/character/InteractiveCharacter";
 import { cx } from "@/lib/utils";
@@ -61,6 +62,12 @@ const COMPANIONS: Record<
     character: FAMILY_CHARACTER,
     // Four abreast, so it needs roughly the aspect of the artwork itself.
     className: "h-[38vh] w-[35vh] min-h-[200px] min-w-[184px]",
+  },
+  SOLO: {
+    character: SOLO_CHARACTER,
+    // One figure, so the narrowest of the three — the artwork is 335x1000,
+    // and holding that ratio is what keeps him from being stretched.
+    className: "h-[42vh] w-[14vh] min-h-[220px] min-w-[74px]",
   },
 };
 

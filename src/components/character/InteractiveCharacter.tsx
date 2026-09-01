@@ -197,6 +197,30 @@ export const FAMILY_CHARACTER: CharacterConfig = {
   breathe: 2.5,
 };
 
+/**
+ * The solo traveller, from a still that already carried a real alpha channel —
+ * so, like the family and unlike the couple, there is nothing to key.
+ *
+ * The head circle was read off the alpha rather than guessed. Scanning the
+ * opaque span row by row, the silhouette widens to 134px by y=60, pinches to
+ * 68px at y=170 — the neck — then flares past 180 as the shoulders begin. So
+ * the head runs from the crown to 0.17 of the height, centred at 0.085, and a
+ * radius of 0.26 covers crown to jaw. It overshoots sideways, which costs
+ * nothing: at that height everything either side of him is transparent.
+ *
+ * One person means one head, so the torso band matters more here than it does
+ * for a group — it is the only thing between his head and his feet.
+ */
+export const SOLO_CHARACTER: CharacterConfig = {
+  ...BASE_CONFIG,
+  source: { kind: "image", src: "/characters/solo.webp", width: 335, height: 1000 },
+  heads: [{ name: "traveller", cx: 0.481, cy: 0.085, r: 0.26 }],
+  torso: { from: 0.17, to: 0.52, feather: 0.12 },
+  // A still needs its own life. Slower than the family's, because one person
+  // standing alone reads as unnatural sooner than a busy group does.
+  breathe: 2,
+};
+
 /* ------------------------------------------------------------ pointer -- */
 
 type PointerMode = "full" | "damped" | "idle";
