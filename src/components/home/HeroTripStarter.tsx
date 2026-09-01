@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Scene } from "@/components/media/Scene";
@@ -95,7 +95,9 @@ export function HeroTripStarter({
   const goTo = (next: number, dir: 1 | -1) => {
     setDirection(dir);
     setIndex(next);
-    railRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+    // Instant: a new step should already be at its first option when it slides
+    // in, not glide there afterwards.
+    railRef.current?.scrollTo({ left: 0, behavior: "auto" });
   };
 
   function finish(answers: Selection) {
@@ -133,134 +135,276 @@ export function HeroTripStarter({
 
   return (
     <section aria-label="Start your trip" className="hero-trip-starter" data-direction={direction}>
-      <div className="container-editorial">
-        <div className="mx-auto max-w-4xl rounded-xl border border-sand-50/22 bg-ink-900/60 p-5 shadow-[--shadow-float] backdrop-blur-2xl md:p-7">
-          {/* --- header --- */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
-              <PlayMark className="size-4" />
-              Step {safeIndex + 1} of {steps.length}
-            </p>
+      {/* Full-bleed rather than boxed: the questions sit straight on the
+          footage, held legible by the stage's foot gradient instead of a card. */}
+      <div className="w-full px-5 text-center md:px-10">
+        {/* --- header --- */}
+        <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 drop-shadow-[0_1px_10px_rgb(16_15_14/0.7)]">
+          <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
+            <PlayMark className="size-4" />
+            Step {safeIndex + 1} of {steps.length}
+          </p>
 
-            <div className="flex items-center gap-3">
-              <ol className="flex items-center gap-1.5" aria-label="Progress">
-                {steps.map((s, i) => (
-                  <li
-                    key={s.id}
-                    aria-current={i === safeIndex ? "step" : undefined}
-                    className={cx(
-                      "h-1.5 rounded-pill transition-all duration-[--duration-base] ease-[--ease-expo]",
-                      i === safeIndex
-                        ? "w-7 bg-amber-400"
-                        : i < safeIndex
-                          ? "w-3 bg-amber-400/70"
-                          : "w-3 bg-sand-50/25",
-                    )}
-                  />
-                ))}
-              </ol>
+          <ol className="flex items-center gap-1.5" aria-label="Progress">
+            {steps.map((s, i) => (
+              <li
+                key={s.id}
+                aria-current={i === safeIndex ? "step" : undefined}
+                className={cx(
+                  "h-1.5 rounded-pill transition-all duration-[--duration-base] ease-[--ease-expo]",
+                  i === safeIndex
+                    ? "w-7 bg-amber-400"
+                    : i < safeIndex
+                      ? "w-3 bg-amber-400/70"
+                      : "w-3 bg-sand-50/25",
+                )}
+              />
+            ))}
+          </ol>
 
-              {safeIndex > 0 && (
-                <button
-                  type="button"
-                  onClick={() => goTo(safeIndex - 1, -1)}
-                  className="rounded-pill border border-sand-50/30 px-3.5 py-1.5 text-caption font-semibold uppercase tracking-[0.1em] text-sand-50 transition-colors duration-[--duration-fast] hover:bg-sand-50/10"
-                >
-                  Back
-                </button>
+          {safeIndex > 0 && (
+            <button
+              type="button"
+              onClick={() => goTo(safeIndex - 1, -1)}
+              className="rounded-pill border border-sand-50/40 px-3.5 py-1.5 text-caption font-semibold uppercase tracking-[0.1em] text-sand-50 transition-colors duration-[--duration-fast] hover:bg-sand-50/10"
+            >
+              Back
+            </button>
+          )}
+        </div>
+
+        {/* --- question + body, re-keyed so the slide replays --- */}
+        <div key={step.id} className="hero-trip-starter__panel">
+          <h2 className="mt-3 text-h3 font-semibold text-sand-50 drop-shadow-[0_2px_18px_rgb(16_15_14/0.7)]">
+            {step.question}
+          </h2>
+
+          {/* The calendar and the room steppers still need a surface of their
+              own — dates on open footage are unreadable at any scrim strength.
+              The card rails sit straight on the picture. */}
+          {isRooms || isDate ? (
+            <div className="theme-day mx-auto mt-4 max-h-[46vh] w-full max-w-xl overflow-y-auto rounded-lg bg-background p-4 text-left text-text md:p-5">
+              {isRooms ? (
+                <RoomPicker
+                  value={chosen}
+                  onChange={(encoded) =>
+                    setSelection((prev) => ({ ...prev, rooms: encoded }))
+                  }
+                />
+              ) : (
+                <DatePicker
+                  compact
+                  value={chosen[0]}
+                  bestMonths={seasonMonths}
+                  onChange={(isoDate) =>
+                    setSelection((prev) => ({ ...prev, date: [isoDate] }))
+                  }
+                />
               )}
             </div>
-          </div>
+          ) : isPills ? (
+            <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+              {options.map((option) => (
+                <Pill
+                  key={option.id}
+                  option={option}
+                  selected={chosen.includes(option.id)}
+                  onClick={() => choose(option.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <OptionRail railRef={railRef} label={step.question} count={options.length}>
+              {options.map((option) => (
+                <MiniCard
+                  key={option.id}
+                  option={option}
+                  selected={chosen.includes(option.id)}
+                  onClick={() => choose(option.id)}
+                />
+              ))}
+            </OptionRail>
+          )}
 
-          {/* --- question + body, re-keyed so the slide replays --- */}
-          <div key={step.id} className="hero-trip-starter__panel">
-            <h2 className="mt-4 text-h3 font-semibold text-sand-50">{step.question}</h2>
+          {needsCta && (
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <p className="text-caption text-sand-100/80">
+                {isRooms
+                  ? roomSummary(chosen)
+                  : chosen.length
+                    ? isDate
+                      ? new Date(chosen[0]).toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "long",
+                        })
+                      : `${chosen.length} selected`
+                    : step.optional
+                      ? "Optional — skip if you are flexible"
+                      : "Pick as many as you like"}
+              </p>
 
-            {/* The custom steps render on cream so the calendar and steppers
-                stay legible; the card rails sit straight on the glass. */}
-            {isRooms || isDate ? (
-              <div className="theme-day mt-5 max-h-[46vh] overflow-y-auto rounded-lg bg-background p-4 text-text md:p-5">
-                {isRooms ? (
-                  <RoomPicker
-                    value={chosen}
-                    onChange={(encoded) =>
-                      setSelection((prev) => ({ ...prev, rooms: encoded }))
-                    }
-                  />
-                ) : (
-                  <DatePicker
-                    compact
-                    value={chosen[0]}
-                    bestMonths={seasonMonths}
-                    onChange={(isoDate) =>
-                      setSelection((prev) => ({ ...prev, date: [isoDate] }))
-                    }
-                  />
-                )}
-              </div>
-            ) : isPills ? (
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                {options.map((option) => (
-                  <Pill
-                    key={option.id}
-                    option={option}
-                    selected={chosen.includes(option.id)}
-                    onClick={() => choose(option.id)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div
-                ref={railRef}
-                className="no-scrollbar -mx-1 mt-5 flex gap-3 overflow-x-auto px-1 pb-1"
+              <button
+                type="button"
+                disabled={!step.optional && !chosen.length && !isRooms}
+                onClick={() => advance()}
+                data-cta
+                className="inline-flex h-11 items-center gap-2 rounded-pill bg-amber-400 px-5 text-label font-semibold text-ink-900 transition-[filter,opacity] duration-[--duration-fast] hover:brightness-110 disabled:opacity-40"
               >
-                {options.map((option) => (
-                  <MiniCard
-                    key={option.id}
-                    option={option}
-                    selected={chosen.includes(option.id)}
-                    onClick={() => choose(option.id)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {needsCta && (
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                <p className="text-caption text-sand-100/70">
-                  {isRooms
-                    ? roomSummary(chosen)
-                    : chosen.length
-                      ? isDate
-                        ? new Date(chosen[0]).toLocaleDateString("en-IN", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "long",
-                          })
-                        : `${chosen.length} selected`
-                      : step.optional
-                        ? "Optional — skip if you are flexible"
-                        : "Pick as many as you like"}
-                </p>
-
-                <button
-                  type="button"
-                  disabled={!step.optional && !chosen.length && !isRooms}
-                  onClick={() => advance()}
-                  data-cta
-                  className="inline-flex h-11 items-center gap-2 rounded-pill bg-amber-400 px-5 text-label font-semibold text-ink-900 transition-[filter,opacity] duration-[--duration-fast] hover:brightness-110 disabled:opacity-40"
-                >
-                  {isLast ? "See my journey" : step.cta}
-                  <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
-                    <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
+                {isLast ? "See my journey" : step.cta}
+                <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+                  <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Horizontal rail with a real slider affordance.
+ *
+ * The rail always scrolled, but with the scrollbar hidden there was nothing to
+ * say so — eighteen destinations looked like six. Arrows and edge fades appear
+ * only when the content genuinely overflows, and the track centres itself when
+ * everything already fits, so a four-option step still reads as centred.
+ */
+function OptionRail({
+  railRef,
+  label,
+  count,
+  children,
+}: {
+  railRef: React.RefObject<HTMLDivElement | null>;
+  label: string;
+  /** Option count, so re-measuring keys off a primitive rather than the
+      `children` array, whose identity changes on every parent render. */
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [edges, setEdges] = useState({ overflowing: false, atStart: true, atEnd: false });
+
+  const measure = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    // A pixel of slack: sub-pixel layout means scrollLeft rarely lands exactly
+    // on the maximum, and a permanently-enabled arrow is worse than none.
+    const max = el.scrollWidth - el.clientWidth;
+    setEdges({
+      overflowing: max > 1,
+      atStart: el.scrollLeft <= 1,
+      atEnd: el.scrollLeft >= max - 1,
+    });
+  }, [railRef]);
+
+  // Re-measure on mount, on step change (children), and whenever the stage is
+  // resized — the same option count overflows at 1280 and fits at 1920.
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [measure, railRef, count]);
+
+  const nudge = (by: number) => {
+    const el = railRef.current;
+    if (!el) return;
+    // Instant, not smooth. The hero runs a rAF loop that reads layout every
+    // frame, which starves Chrome's smooth-scroll animation: measured, a
+    // smooth nudge sat still for ~750ms and then snapped to the target. A
+    // click that appears to do nothing for three quarters of a second reads as
+    // broken, so the rail steps immediately instead.
+    el.scrollBy({ left: by * Math.max(el.clientWidth * 0.7, 200), behavior: "auto" });
+  };
+
+  return (
+    <div className="relative mt-4">
+      <div
+        ref={railRef}
+        onScroll={measure}
+        role="group"
+        aria-label={label}
+        tabIndex={edges.overflowing ? 0 : -1}
+        className={cx(
+          // No `scroll-smooth` here: the arrows pass `behavior: "smooth"`
+          // themselves, and having both meant every programmatic scrollLeft
+          // write animated too — including the reset between steps, which
+          // should be instant.
+          "no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1",
+          // Centre while everything fits; once it overflows, centring would
+          // strand the first card off the left edge.
+          edges.overflowing ? "justify-start" : "justify-center",
+        )}
+      >
+        {children}
+      </div>
+
+      {edges.overflowing && (
+        <>
+          {/* Fades sit over the rail edges to signal "there is more this way". */}
+          <span
+            aria-hidden="true"
+            className={cx(
+              "pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-ink-900/70 to-transparent transition-opacity duration-[--duration-base]",
+              edges.atStart && "opacity-0",
+            )}
+          />
+          <span
+            aria-hidden="true"
+            className={cx(
+              "pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-ink-900/70 to-transparent transition-opacity duration-[--duration-base]",
+              edges.atEnd && "opacity-0",
+            )}
+          />
+
+          <RailArrow side="left" disabled={edges.atStart} onClick={() => nudge(-1)} />
+          <RailArrow side="right" disabled={edges.atEnd} onClick={() => nudge(1)} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function RailArrow({
+  side,
+  disabled,
+  onClick,
+}: {
+  side: "left" | "right";
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={side === "left" ? "Show previous options" : "Show more options"}
+      className={cx(
+        // 44px, so it stays a comfortable touch target on a phone.
+        "absolute top-[42%] grid size-11 -translate-y-1/2 place-items-center rounded-full",
+        "border border-sand-50/35 bg-ink-900/70 text-sand-50 backdrop-blur-md",
+        "transition-[opacity,background-color,border-color] duration-[--duration-fast]",
+        "hover:border-amber-400 hover:text-amber-300",
+        "disabled:pointer-events-none disabled:opacity-0",
+        side === "left" ? "left-0 md:-left-1" : "right-0 md:-right-1",
+      )}
+    >
+      <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true">
+        <path
+          d={side === "left" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"}
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }
 
@@ -389,6 +533,9 @@ function MiniCard({
       <span
         className={cx(
           "mt-2 block truncate text-label font-semibold transition-colors duration-[--duration-fast]",
+          // The cards sit straight on the footage now, so the label carries its
+          // own shadow rather than relying on a card behind it.
+          "drop-shadow-[0_1px_8px_rgb(16_15_14/0.85)]",
           selected ? "text-amber-300" : "text-sand-50 group-hover/mini:text-amber-300",
         )}
       >

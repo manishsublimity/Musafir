@@ -446,9 +446,11 @@
   z-index: 11;
   left: 0;
   right: 0;
-  top: 50%;
+  /* Anchored to the foot of the stage, so the tall steps (the calendar) grow
+     upward into the sky rather than pushing their controls off the bottom. */
+  bottom: clamp(24px, 4.5vh, 60px);
   opacity: var(--starter-opacity, 0);
-  transform: translate3d(0, calc(-50% + var(--starter-y, 48px)), 0);
+  transform: translate3d(0, var(--starter-y, 48px), 0);
   will-change: transform, opacity;
   /* Invisible until it has actually arrived, so it never eats clicks meant for
      the story panels underneath. */
@@ -477,16 +479,26 @@
   .hero-trip-starter__panel { animation: none; }
 }
 
-/* The foot follows the starter now, not the intro copy. */
+/* The foot follows the starter now, not the intro copy. The starter carries no
+   card of its own any more, so this gradient is the only thing holding its
+   copy legible against the footage — hence the three stops: weighted at the
+   base where the controls sit, thinning fast so the river still reads as
+   river. It fades in and out with the starter itself. */
 .cinema-root .stage::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 72%;
+  height: 78%;
   z-index: 10;
   pointer-events: none;
   opacity: var(--starter-opacity, 0);
-  background: linear-gradient(to top, rgb(16 15 14 / 0.58), transparent);
+  background: linear-gradient(
+    to top,
+    rgb(16 15 14 / 0.72) 0%,
+    rgb(16 15 14 / 0.46) 34%,
+    rgb(16 15 14 / 0.12) 68%,
+    transparent 100%
+  );
 }
 
 /* The bazaar layer is footage now. The clip was rendered from the very same
