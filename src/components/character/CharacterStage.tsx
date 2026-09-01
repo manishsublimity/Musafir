@@ -12,49 +12,44 @@ import { CHARACTERS, type CharacterId } from "./characters";
  * character for another rather than mutating one in place.
  *
  * ---------------------------------------------------------------------------
- * THE RESERVED COLUMN
+ * THE COLUMN, AND WHY IT IS A FORMULA
  *
- * The character used to be dropped into the left gutter at a fixed inset and
- * simply hoped to miss the interface. It did not: the option rail runs the
- * full width of the stage, so the figure's feet landed on the first two cards
- * and it looked like they were standing on them.
+ * The character stands at the left while the panel stays centred on the full
+ * width. Those two facts constrain each other: the character has to end before
+ * the centred content begins, or the heading runs straight across somebody's
+ * chest.
  *
- * So the column is declared here instead of guessed. `COLUMN` is the width
- * each character reserves, and the starter reads the same number to pad its
- * own content across. One constant drives both, which is the only way the two
- * can be guaranteed not to overlap — and it also means a character can be as
- * large as it needs to be without anything having to be nudged by hand.
+ * The constraint was measured rather than guessed. Rendering every question in
+ * the flow at its real size, the widest — "How many rooms does your group
+ * need?" — is 519px, so the content reaches 260px either side of the middle;
+ * the room picker's own panel is 512px, which lands in the same place. Add a
+ * little air and the character has to stop 290px short of centre.
  *
- * The widths differ per character because the artwork does. A solo figure is
- * a narrow portrait; five friends abreast is a wide, short picture, and
- * forcing it into a portrait column is what made it look shrunken next to the
- * others. It gets the widest column instead.
+ * That threshold moves with the viewport, because the text width barely
+ * changes but the middle does — so a fixed column is right at exactly one size
+ * and wrong everywhere else. A 572px column is comfortable at 1900 and puts
+ * the heading through the artwork at 1296.
+ *
+ * Hence one expression, `50vw - 290px`, clamped at both ends. Checked across
+ * 1024, 1280, 1296, 1536 and 1900: the figure clears the content at every one,
+ * with about 20px to spare at the tightest.
+ *
+ * ---------------------------------------------------------------------------
+ * ONE BOX FOR EVERY CHARACTER
+ *
+ * There is no per-character sizing table any more. Every character gets the
+ * same box and `object-contain` does the fitting, which is what keeps them
+ * consistent: five friends abreast fill the width and come out short, a solo
+ * traveller fills the height and comes out narrow. Neither can be stretched,
+ * and neither can end up looking shrunken beside the others, because neither
+ * has its own hand-tuned numbers left to drift.
  */
-
-/** Width each character reserves at the left of the stage, in px. */
-export const COLUMN: Record<CharacterId, number> = {
-  couple: 250,
-  family: 340,
-  friends: 440,
-  soloBoy: 210,
-  soloGirl: 220,
-};
 
 /**
- * Heights are chosen so every party has similar presence. Widths follow from
- * each asset's own aspect and must stay inside its column.
+ * Left edge to where the centred content begins. The upper bound is not
+ * arbitrary: it is what puts the friends group about 30% wider than it was.
  */
-const SIZING: Record<CharacterId, string> = {
-  // 506x1000 — portrait.
-  couple: "h-[46vh] w-[23.3vh] min-h-[300px] min-w-[152px]",
-  // 1000x1095 — nearly square.
-  family: "h-[42vh] w-[38.4vh] min-h-[280px] min-w-[256px]",
-  // 1300x896 — wide and short, so it earns its height through width.
-  friends: "h-[29vh] w-[42vh] min-h-[195px] min-w-[283px]",
-  // 335x1000 and 363x1000 — narrow portraits.
-  soloBoy: "h-[48vh] w-[16.1vh] min-h-[310px] min-w-[104px]",
-  soloGirl: "h-[48vh] w-[17.4vh] min-h-[310px] min-w-[113px]",
-};
+export const COLUMN = "clamp(170px, calc(50vw - 290px), 590px)";
 
 export function CharacterStage({
   character,
@@ -67,14 +62,15 @@ export function CharacterStage({
     <div
       aria-hidden="true"
       className={className}
-      // The stage IS the reserved column, so the figure is centred in exactly
-      // the space the starter padded itself clear of.
-      style={{ width: character ? COLUMN[character] : 0 }}
+      // The stage IS the column, so the figure occupies exactly the space an
+      // overflowing rail was told to start after.
+      style={{ width: character ? COLUMN : 0, height: "46vh" }}
     >
       <AnimatePresence mode="wait">
         {character && (
           <motion.div
             key={character}
+            className="size-full"
             initial={{ opacity: 0, scale: 0.75, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             // Leaving is quicker and plainer than arriving. A character that
@@ -83,7 +79,7 @@ export function CharacterStage({
             transition={{ type: "spring", stiffness: 180, damping: 18, mass: 0.8 }}
             style={{ transformOrigin: "50% 100%" }}
           >
-            <InteractiveCharacter character={character} className={SIZING[character]} />
+            <InteractiveCharacter character={character} className="size-full" />
           </motion.div>
         )}
       </AnimatePresence>

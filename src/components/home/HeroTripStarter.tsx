@@ -177,15 +177,16 @@ export function HeroTripStarter({
         aria-label="Start your trip"
         className="hero-trip-starter"
         data-direction={direction}
-        // The character stands in a column at the left; the content is padded
-        // clear of it so the two can never overlap. Both read the same
-        // constant, so the reservation cannot drift from the figure that sits
-        // in it. Below lg there is no character, so there is nothing to clear.
-        style={{ "--character-column": character ? `${COLUMN[character]}px` : "0px" } as CSSProperties}
+        // Width of the column the character occupies at the left. The panel
+        // itself stays centred on the full width — only an overflowing option
+        // rail starts past this, so the first cards do not open underneath the
+        // figure. Read from the same constant the stage sizes itself from, so
+        // the two cannot drift apart. Zero when nobody is on stage.
+        style={{ "--character-column": character ? COLUMN : "0px" } as CSSProperties}
       >
         {/* Full-bleed rather than boxed: the questions sit straight on the
             footage, held legible by the stage's foot gradient instead of a card. */}
-        <div className="w-full px-5 text-center md:px-10 lg:pl-[calc(var(--character-column)+2.5rem)]">
+        <div className="w-full px-5 text-center md:px-10">
           {/* --- header --- */}
           <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 drop-shadow-[0_1px_10px_rgb(16_15_14/0.7)]">
             <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
@@ -398,7 +399,16 @@ function OptionRail({
           "no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1",
           // Centre while everything fits; once it overflows, centring would
           // strand the first card off the left edge.
-          edges.overflowing ? "justify-start" : "justify-center",
+          //
+          // The overflowing case also starts clear of the character. Only the
+          // rail is inset, not the whole panel: the question and the progress
+          // stay centred on the full width, and a step whose options already
+          // fit is centred too, so the layout never looks pushed sideways.
+          // Cards scroll under the figure from there, which reads as depth
+          // rather than collision — the interface is in front of the scene.
+          edges.overflowing
+            ? "justify-start lg:ps-[var(--character-column,0px)]"
+            : "justify-center",
         )}
       >
         {children}
