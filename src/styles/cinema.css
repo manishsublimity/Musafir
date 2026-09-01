@@ -483,6 +483,24 @@
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+/**
+ * The character arrives and leaves with the starter it belongs to.
+ *
+ * It is a sibling of the starter rather than a child — it has to be
+ * positioned against the stage, while the starter is bottom-anchored and only
+ * as tall as its current step — so it does not inherit the fade, and without
+ * this it simply stayed on screen after the panel had gone. Scrolling back up
+ * to the story left a character standing in the middle of it.
+ *
+ * Same two variables, so the two can never disagree about whether the starter
+ * is on screen.
+ */
+.hero-character-stage {
+  opacity: var(--starter-opacity, 0);
+  transform: translate3d(0, var(--starter-y, 48px), 0);
+  will-change: transform;
+}
+
 /* ------------------------------------------------------- option rail -- */
 
 /**

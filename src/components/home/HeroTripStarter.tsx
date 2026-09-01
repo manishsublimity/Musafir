@@ -170,7 +170,7 @@ export function HeroTripStarter({
           phone there is no gutter to stand in. */}
       <CharacterStage
         character={character}
-        className="pointer-events-none absolute bottom-[19%] left-0 z-[11] hidden items-end justify-center lg:flex"
+        className="hero-character-stage pointer-events-none absolute bottom-[19%] left-0 z-[11] hidden items-end justify-center lg:flex"
       />
 
       <section
