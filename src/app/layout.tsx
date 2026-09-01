@@ -63,7 +63,20 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" className={`${fraunces.variable} ${manrope.variable}`}>
-      <body>
+      {/*
+        Browser extensions write their own attributes onto <body> before React
+        hydrates — ColorZilla's `cz-shortcut-listen`, and password managers,
+        translators and dark-mode add-ons all do the same. The server never
+        rendered them, so React reports a hydration mismatch for something no
+        change to this codebase can prevent.
+
+        `suppressHydrationWarning` applies to this element only, not to its
+        subtree, so it silences exactly those injected attributes and a real
+        mismatch anywhere inside the app still surfaces. That scoping is the
+        point: left unsuppressed, the extension noise is what buries a genuine
+        hydration error when we cause one.
+      */}
+      <body suppressHydrationWarning>
         <JsonLd data={organizationSchema()} />
         <JsonLd data={websiteSchema()} />
 
