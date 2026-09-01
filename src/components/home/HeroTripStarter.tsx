@@ -10,7 +10,12 @@ import { RoomPicker, decodeRooms } from "@/components/customize/RoomPicker";
 import { STEPS, type StepOption } from "@/components/customize/steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
-import { CoupleInteractiveCharacter } from "@/components/character/CoupleInteractiveCharacter";
+import {
+  InteractiveCharacter,
+  COUPLE_CHARACTER,
+  FAMILY_CHARACTER,
+  type CharacterConfig,
+} from "@/components/character/InteractiveCharacter";
 import { cx } from "@/lib/utils";
 
 /**
@@ -38,6 +43,26 @@ export interface HeroCityOption {
 }
 
 type Selection = Record<string, string[]>;
+
+/**
+ * Which character joins the scene for each answer to "who's coming along".
+ * Only the parties we actually have artwork for appear — the rest simply get
+ * no companion rather than a stand-in for someone else.
+ */
+const COMPANIONS: Record<
+  string,
+  { character: CharacterConfig; className: string } | undefined
+> = {
+  COUPLE: {
+    character: COUPLE_CHARACTER,
+    className: "h-[42vh] w-[24vh] min-h-[220px] min-w-[126px]",
+  },
+  FAMILY: {
+    character: FAMILY_CHARACTER,
+    // Four abreast, so it needs roughly the aspect of the artwork itself.
+    className: "h-[38vh] w-[35vh] min-h-[200px] min-w-[184px]",
+  },
+};
 
 export function HeroTripStarter({
   destinations,
@@ -85,6 +110,10 @@ export function HeroTripStarter({
   }, [step, destinations, cities, chosenDestination]);
 
   const seasonMonths = destinations.find((d) => d.slug === chosenDestination)?.bestMonths;
+
+  // The family is a wider group than the couple, so it gets its own box rather
+  // than being squeezed into the couple's portrait footprint.
+  const companion = COMPANIONS[selection.travelWith?.[0] ?? ""];
 
   /** Steps with no artwork read better as pills than as picture cards. */
   const isPills = step.id === "duration";
@@ -136,15 +165,24 @@ export function HeroTripStarter({
 
   return (
     <>
-      {/* Choosing "Couple" brings the couple into the scene, and they stay for
-          the rest of the flow watching the cursor. Purely decorative — it
-          carries no information, so it is hidden from assistive tech. */}
-      {selection.travelWith?.[0] === "COUPLE" && (
+      {/* The chosen travel party walks into the scene and stays for the rest of
+          the flow, watching the cursor. Purely decorative — it carries no
+          information, so it is hidden from assistive tech. */}
+      {companion && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-1/2 z-[11] flex -translate-y-1/2 justify-center"
+          // Off to the side and standing on the far bank, rather than centred.
+          // The starter is bottom-anchored and its tallest step — the room
+          // picker — is about 70% of the stage, so a centred character has
+          // nowhere left to stand: it either floats up in the sky to clear the
+          // card or disappears behind it. The side gutter stays clear on every
+          // step, and the waterline gives the group real ground to stand on.
+          className="pointer-events-none absolute bottom-[19%] left-[3vw] z-[11] hidden lg:block"
         >
-          <CoupleInteractiveCharacter className="h-[46vh] w-[26vh] min-h-[240px] min-w-[136px]" />
+          <InteractiveCharacter
+            character={companion.character}
+            className={companion.className}
+          />
         </div>
       )}
 
