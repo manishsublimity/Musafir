@@ -12,6 +12,7 @@ import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
 import { AnimatePresence } from "motion/react";
 import { CharacterStage, columnFor } from "@/components/character/CharacterStage";
+import { DestinationBackdrop } from "@/components/home/DestinationBackdrop";
 import { SoloSelector } from "@/components/character/SoloSelector";
 import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
@@ -87,7 +88,9 @@ export function HeroTripStarter({
     return step.options ?? [];
   }, [step, destinations, cities, chosenDestination]);
 
-  const seasonMonths = destinations.find((d) => d.slug === chosenDestination)?.bestMonths;
+  /** The chosen destination's own record, for its season data and its hero. */
+  const destination = destinations.find((d) => d.slug === chosenDestination);
+  const seasonMonths = destination?.bestMonths;
 
   /**
    * The travelling party, once the answer resolves to one. Solo resolves only
@@ -162,6 +165,10 @@ export function HeroTripStarter({
 
   return (
     <>
+      {/* Once a destination is picked the hero becomes that place, so the rest
+          of the questions are answered against the trip being planned. */}
+      <DestinationBackdrop destination={destination} />
+
       {/* The chosen party walks into the scene and stays for the rest of the
           flow, watching the cursor. It sits in the left gutter, standing on
           the far bank: the starter is bottom-anchored and its tallest step —
