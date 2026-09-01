@@ -174,138 +174,138 @@ export function HeroTripStarter({
       />
 
       <section aria-label="Start your trip" className="hero-trip-starter" data-direction={direction}>
-      {/* Full-bleed rather than boxed: the questions sit straight on the
-          footage, held legible by the stage's foot gradient instead of a card. */}
-      <div className="w-full px-5 text-center md:px-10">
-        {/* --- header --- */}
-        <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 drop-shadow-[0_1px_10px_rgb(16_15_14/0.7)]">
-          <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
-            <PlayMark className="size-4" />
-            Step {safeIndex + 1} of {steps.length}
-          </p>
+        {/* Full-bleed rather than boxed: the questions sit straight on the
+            footage, held legible by the stage's foot gradient instead of a card. */}
+        <div className="w-full px-5 text-center md:px-10">
+          {/* --- header --- */}
+          <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 drop-shadow-[0_1px_10px_rgb(16_15_14/0.7)]">
+            <p className="flex items-center gap-2.5 text-caption font-semibold uppercase tracking-[0.16em] text-amber-300">
+              <PlayMark className="size-4" />
+              Step {safeIndex + 1} of {steps.length}
+            </p>
 
-          <ol className="flex items-center gap-1.5" aria-label="Progress">
-            {steps.map((s, i) => (
-              <li
-                key={s.id}
-                aria-current={i === safeIndex ? "step" : undefined}
-                className={cx(
-                  "h-1.5 rounded-pill transition-all duration-[--duration-base] ease-[--ease-expo]",
-                  i === safeIndex
-                    ? "w-7 bg-amber-400"
-                    : i < safeIndex
-                      ? "w-3 bg-amber-400/70"
-                      : "w-3 bg-sand-50/25",
-                )}
-              />
-            ))}
-          </ol>
-
-          {safeIndex > 0 && (
-            <button
-              type="button"
-              onClick={() => goTo(safeIndex - 1, -1)}
-              className="rounded-pill border border-sand-50/40 px-3.5 py-1.5 text-caption font-semibold uppercase tracking-[0.1em] text-sand-50 transition-colors duration-[--duration-fast] hover:bg-sand-50/10"
-            >
-              Back
-            </button>
-          )}
-        </div>
-
-        {/* --- question + body, re-keyed so the slide replays --- */}
-        <div key={step.id} className="hero-trip-starter__panel">
-          <h2 className="mt-3 text-h3 font-semibold text-sand-50 drop-shadow-[0_2px_18px_rgb(16_15_14/0.7)]">
-            {step.question}
-          </h2>
-
-          {/* The calendar and the room steppers still need a surface of their
-              own — dates on open footage are unreadable at any scrim strength.
-              The card rails sit straight on the picture. */}
-          {isRooms || isDate ? (
-            <div className="theme-day mx-auto mt-4 max-h-[46vh] w-full max-w-xl overflow-y-auto rounded-lg bg-background p-4 text-left text-text md:p-5">
-              {isRooms ? (
-                <RoomPicker
-                  value={chosen}
-                  onChange={(encoded) =>
-                    setSelection((prev) => ({ ...prev, rooms: encoded }))
-                  }
-                />
-              ) : (
-                <DatePicker
-                  compact
-                  value={chosen[0]}
-                  bestMonths={seasonMonths}
-                  onChange={(isoDate) =>
-                    setSelection((prev) => ({ ...prev, date: [isoDate] }))
-                  }
-                />
-              )}
-            </div>
-          ) : isPills ? (
-            <div className="mt-4 flex flex-wrap justify-center gap-2.5">
-              {options.map((option) => (
-                <Pill
-                  key={option.id}
-                  option={option}
-                  selected={chosen.includes(option.id)}
-                  onClick={() => choose(option.id)}
+            <ol className="flex items-center gap-1.5" aria-label="Progress">
+              {steps.map((s, i) => (
+                <li
+                  key={s.id}
+                  aria-current={i === safeIndex ? "step" : undefined}
+                  className={cx(
+                    "h-1.5 rounded-pill transition-all duration-[--duration-base] ease-[--ease-expo]",
+                    i === safeIndex
+                      ? "w-7 bg-amber-400"
+                      : i < safeIndex
+                        ? "w-3 bg-amber-400/70"
+                        : "w-3 bg-sand-50/25",
+                  )}
                 />
               ))}
-            </div>
-          ) : (
-            <OptionRail railRef={railRef} label={step.question} count={options.length}>
-              {options.map((option) => (
-                <MiniCard
-                  key={option.id}
-                  option={option}
-                  selected={chosen.includes(option.id)}
-                  onClick={() => choose(option.id)}
-                />
-              ))}
-            </OptionRail>
-          )}
+            </ol>
 
-          {/* Solo asks one more thing before it can show anyone. */}
-          <AnimatePresence>
-            {isTravelWith && chosen[0] === "SOLO" && (
-              <SoloSelector value={selection.soloGender?.[0]} onSelect={chooseSoloGender} />
-            )}
-          </AnimatePresence>
-
-          {needsCta && (
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <p className="text-caption text-sand-100/80">
-                {isRooms
-                  ? roomSummary(chosen)
-                  : chosen.length
-                    ? isDate
-                      ? new Date(chosen[0]).toLocaleDateString("en-IN", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "long",
-                        })
-                      : `${chosen.length} selected`
-                    : step.optional
-                      ? "Optional — skip if you are flexible"
-                      : "Pick as many as you like"}
-              </p>
-
+            {safeIndex > 0 && (
               <button
                 type="button"
-                disabled={!step.optional && !chosen.length && !isRooms}
-                onClick={() => advance()}
-                data-cta
-                className="inline-flex h-11 items-center gap-2 rounded-pill bg-amber-400 px-5 text-label font-semibold text-ink-900 transition-[filter,opacity] duration-[--duration-fast] hover:brightness-110 disabled:opacity-40"
+                onClick={() => goTo(safeIndex - 1, -1)}
+                className="rounded-pill border border-sand-50/40 px-3.5 py-1.5 text-caption font-semibold uppercase tracking-[0.1em] text-sand-50 transition-colors duration-[--duration-fast] hover:bg-sand-50/10"
               >
-                {isLast ? "See my journey" : step.cta}
-                <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
-                  <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                Back
               </button>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* --- question + body, re-keyed so the slide replays --- */}
+          <div key={step.id} className="hero-trip-starter__panel">
+            <h2 className="mt-3 text-h3 font-semibold text-sand-50 drop-shadow-[0_2px_18px_rgb(16_15_14/0.7)]">
+              {step.question}
+            </h2>
+
+            {/* The calendar and the room steppers still need a surface of their
+                own — dates on open footage are unreadable at any scrim strength.
+                The card rails sit straight on the picture. */}
+            {isRooms || isDate ? (
+              <div className="theme-day mx-auto mt-4 max-h-[46vh] w-full max-w-xl overflow-y-auto rounded-lg bg-background p-4 text-left text-text md:p-5">
+                {isRooms ? (
+                  <RoomPicker
+                    value={chosen}
+                    onChange={(encoded) =>
+                      setSelection((prev) => ({ ...prev, rooms: encoded }))
+                    }
+                  />
+                ) : (
+                  <DatePicker
+                    compact
+                    value={chosen[0]}
+                    bestMonths={seasonMonths}
+                    onChange={(isoDate) =>
+                      setSelection((prev) => ({ ...prev, date: [isoDate] }))
+                    }
+                  />
+                )}
+              </div>
+            ) : isPills ? (
+              <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+                {options.map((option) => (
+                  <Pill
+                    key={option.id}
+                    option={option}
+                    selected={chosen.includes(option.id)}
+                    onClick={() => choose(option.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <OptionRail railRef={railRef} label={step.question} count={options.length}>
+                {options.map((option) => (
+                  <MiniCard
+                    key={option.id}
+                    option={option}
+                    selected={chosen.includes(option.id)}
+                    onClick={() => choose(option.id)}
+                  />
+                ))}
+              </OptionRail>
+            )}
+
+            {/* Solo asks one more thing before it can show anyone. */}
+            <AnimatePresence>
+              {isTravelWith && chosen[0] === "SOLO" && (
+                <SoloSelector value={selection.soloGender?.[0]} onSelect={chooseSoloGender} />
+              )}
+            </AnimatePresence>
+
+            {needsCta && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+                <p className="text-caption text-sand-100/80">
+                  {isRooms
+                    ? roomSummary(chosen)
+                    : chosen.length
+                      ? isDate
+                        ? new Date(chosen[0]).toLocaleDateString("en-IN", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "long",
+                          })
+                        : `${chosen.length} selected`
+                      : step.optional
+                        ? "Optional — skip if you are flexible"
+                        : "Pick as many as you like"}
+                </p>
+
+                <button
+                  type="button"
+                  disabled={!step.optional && !chosen.length && !isRooms}
+                  onClick={() => advance()}
+                  data-cta
+                  className="inline-flex h-11 items-center gap-2 rounded-pill bg-amber-400 px-5 text-label font-semibold text-ink-900 transition-[filter,opacity] duration-[--duration-fast] hover:brightness-110 disabled:opacity-40"
+                >
+                  {isLast ? "See my journey" : step.cta}
+                  <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden="true">
+                    <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
       </section>
     </>
   );
