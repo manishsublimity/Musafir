@@ -382,15 +382,30 @@ function OptionRail({
   };
 
   return (
-    // The band is inset by the character's column on BOTH sides, not just the
-    // one it stands in. Insetting only the left would clear the figure but
-    // shift every card right, and the rail would no longer share a centre with
-    // the question above it — which is exactly what made the step look
-    // off-centre. Symmetric insets cost some visible cards and buy a rail that
-    // is centred on the same axis as everything else.
+    // Full bleed: negative margins cancel the panel's own padding so the rail
+    // runs edge to edge, and `hero-option-rail` feathers those edges rather
+    // than clipping them. The left feather is as wide as the character's
+    // column, so cards dissolve into the scene exactly where the figure
+    // stands instead of colliding with it.
     <div
-      className="relative mx-auto mt-4"
-      style={{ width: "calc(100% - 2 * var(--character-column, 0px))" }}
+      className="hero-option-rail relative -mx-5 mt-4 md:-mx-10"
+      // Two shapes, depending on whether there is anything to scroll.
+      //
+      // Overflowing: the left feather widens to the character's column so the
+      // cards flow edge to edge and dissolve where the figure stands. The rail
+      // reads as one continuous strip across the whole stage.
+      //
+      // Fitting: the feathers go back to matching, because an asymmetric one
+      // would centre the cards inside the padding rather than on the stage,
+      // and a five-option step would sit visibly off-axis from the question
+      // above it. Symmetric feathers keep it on the same centre; the cards may
+      // then pass in front of the character, which reads as layering because
+      // they are unmistakably the nearer thing.
+      style={
+        edges.overflowing
+          ? undefined
+          : ({ "--rail-fade-left": "4rem", "--rail-fade-right": "4rem" } as CSSProperties)
+      }
     >
       <div
         ref={railRef}
@@ -403,7 +418,7 @@ function OptionRail({
           // themselves, and having both meant every programmatic scrollLeft
           // write animated too — including the reset between steps, which
           // should be instant.
-          "no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1",
+          "hero-option-rail__track no-scrollbar flex gap-3 overflow-x-auto pb-1",
           // Centre while everything fits; once it overflows, centring would
           // strand the first card off the left edge.
           edges.overflowing ? "justify-start" : "justify-center",
@@ -414,22 +429,6 @@ function OptionRail({
 
       {edges.overflowing && (
         <>
-          {/* Fades sit over the rail edges to signal "there is more this way". */}
-          <span
-            aria-hidden="true"
-            className={cx(
-              "pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-ink-900/70 to-transparent transition-opacity duration-[--duration-base]",
-              edges.atStart && "opacity-0",
-            )}
-          />
-          <span
-            aria-hidden="true"
-            className={cx(
-              "pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-ink-900/70 to-transparent transition-opacity duration-[--duration-base]",
-              edges.atEnd && "opacity-0",
-            )}
-          />
-
           <RailArrow side="left" disabled={edges.atStart} onClick={() => nudge(-1)} />
           <RailArrow side="right" disabled={edges.atEnd} onClick={() => nudge(1)} />
         </>
@@ -460,8 +459,15 @@ function RailArrow({
         "transition-[opacity,background-color,border-color] duration-[--duration-fast]",
         "hover:border-amber-400 hover:text-amber-300",
         "disabled:pointer-events-none disabled:opacity-0",
-        side === "left" ? "left-0 md:-left-1" : "right-0 md:-right-1",
       )}
+      // Parked at the inner edge of each feather. At the very edge the left
+      // arrow would sit on top of the character, and both would be floating
+      // over the part of the rail that has already dissolved.
+      style={
+        side === "left"
+          ? { left: "calc(var(--rail-fade-left) - 3.25rem)" }
+          : { right: "calc(var(--rail-fade-right) - 3.25rem)" }
+      }
     >
       <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden="true">
         <path

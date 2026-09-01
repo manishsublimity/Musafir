@@ -483,8 +483,93 @@
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+/* ------------------------------------------------------- option rail -- */
+
+/**
+ * The rail runs the full width of the stage and feathers at both ends rather
+ * than clipping. A scroller normally cuts its edge cards off mid-shape, which
+ * is what made the outermost destinations look chopped; a mask dissolves them
+ * into the scene instead, so a card leaves by fading out rather than by
+ * hitting a wall.
+ *
+ * The left feather is the character's own column, so cards fade to nothing
+ * exactly where the figure stands — the two share the space instead of
+ * fighting over it. The right feather is a fixed distance, since there is
+ * nothing to avoid on that side.
+ *
+ * The track carries matching padding, so at rest the first and last cards sit
+ * at the inner edge of their feather and are fully opaque. Nothing is ever
+ * parked inside the fade where it cannot be seen or clicked; the dissolve is
+ * something that happens while scrolling, not a permanent dead zone.
+ */
+.hero-option-rail {
+  --rail-fade-left: max(4rem, calc(var(--character-column, 0px) + 1.5rem));
+  --rail-fade-right: 7rem;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade-left),
+    #000 calc(100% - var(--rail-fade-right)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--rail-fade-left),
+    #000 calc(100% - var(--rail-fade-right)),
+    transparent 100%
+  );
+}
+
+.hero-option-rail__track {
+  padding-inline: var(--rail-fade-left) var(--rail-fade-right);
+  /* Keyboard focus and programmatic scrolls land at the opaque edge rather
+     than under the feather. */
+  scroll-padding-inline: var(--rail-fade-left) var(--rail-fade-right);
+}
+
+/* Below lg there is no character, so the left feather has nothing to clear. */
+@media (max-width: 1023px) {
+  .hero-option-rail { --rail-fade-left: 4rem; --rail-fade-right: 4rem; }
+}
+
+/**
+ * Cards emerge rather than appear: up out of the scene, softening in from a
+ * blur, with a short stagger so the rail resolves left to right instead of
+ * all at once. The blur is what sells "coming out of the background" — a
+ * plain fade reads as a layer being switched on.
+ */
+.hero-option-rail__track > * {
+  animation: card-emerge 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes card-emerge {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.9);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* The stagger. Kept short — past about the sixth card the delay would be
+   longer than the animation and the tail would visibly lag behind. */
+.hero-option-rail__track > *:nth-child(1) { animation-delay: 0ms; }
+.hero-option-rail__track > *:nth-child(2) { animation-delay: 55ms; }
+.hero-option-rail__track > *:nth-child(3) { animation-delay: 110ms; }
+.hero-option-rail__track > *:nth-child(4) { animation-delay: 165ms; }
+.hero-option-rail__track > *:nth-child(5) { animation-delay: 220ms; }
+.hero-option-rail__track > *:nth-child(n + 6) { animation-delay: 275ms; }
+
 @media (prefers-reduced-motion: reduce) {
   .hero-trip-starter__panel { animation: none; }
+  /* The feathered edges stay — they are how the rail is drawn, not motion —
+     but the cards stop flying in and simply be there. */
+  .hero-option-rail__track > * { animation: none; }
 }
 
 /* The foot follows the starter now, not the intro copy. The starter carries no
