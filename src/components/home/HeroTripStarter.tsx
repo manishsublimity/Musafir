@@ -11,7 +11,7 @@ import { STEPS, type StepOption } from "@/components/customize/steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
 import { AnimatePresence } from "motion/react";
-import { CharacterStage, COLUMN } from "@/components/character/CharacterStage";
+import { CharacterStage, columnFor } from "@/components/character/CharacterStage";
 import { SoloSelector } from "@/components/character/SoloSelector";
 import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
@@ -177,12 +177,10 @@ export function HeroTripStarter({
         aria-label="Start your trip"
         className="hero-trip-starter"
         data-direction={direction}
-        // Width of the column the character occupies at the left. The panel
-        // itself stays centred on the full width — only an overflowing option
-        // rail starts past this, so the first cards do not open underneath the
-        // figure. Read from the same constant the stage sizes itself from, so
-        // the two cannot drift apart. Zero when nobody is on stage.
-        style={{ "--character-column": character ? COLUMN : "0px" } as CSSProperties}
+        // Width of the column the character occupies at the left, read from
+        // the same function the stage sizes itself with so the two cannot
+        // drift apart. Zero when nobody is on stage.
+        style={{ "--character-column": character ? columnFor(character) : "0px" } as CSSProperties}
       >
         {/* Full-bleed rather than boxed: the questions sit straight on the
             footage, held legible by the stage's foot gradient instead of a card. */}
@@ -384,7 +382,16 @@ function OptionRail({
   };
 
   return (
-    <div className="relative mt-4">
+    // The band is inset by the character's column on BOTH sides, not just the
+    // one it stands in. Insetting only the left would clear the figure but
+    // shift every card right, and the rail would no longer share a centre with
+    // the question above it — which is exactly what made the step look
+    // off-centre. Symmetric insets cost some visible cards and buy a rail that
+    // is centred on the same axis as everything else.
+    <div
+      className="relative mx-auto mt-4"
+      style={{ width: "calc(100% - 2 * var(--character-column, 0px))" }}
+    >
       <div
         ref={railRef}
         onScroll={measure}
@@ -399,16 +406,7 @@ function OptionRail({
           "no-scrollbar flex gap-3 overflow-x-auto px-1 pb-1",
           // Centre while everything fits; once it overflows, centring would
           // strand the first card off the left edge.
-          //
-          // The overflowing case also starts clear of the character. Only the
-          // rail is inset, not the whole panel: the question and the progress
-          // stay centred on the full width, and a step whose options already
-          // fit is centred too, so the layout never looks pushed sideways.
-          // Cards scroll under the figure from there, which reads as depth
-          // rather than collision — the interface is in front of the scene.
-          edges.overflowing
-            ? "justify-start lg:ps-[var(--character-column,0px)]"
-            : "justify-center",
+          edges.overflowing ? "justify-start" : "justify-center",
         )}
       >
         {children}

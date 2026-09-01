@@ -46,10 +46,32 @@ import { CHARACTERS, type CharacterId } from "./characters";
  */
 
 /**
- * Left edge to where the centred content begins. The upper bound is not
- * arbitrary: it is what puts the friends group about 30% wider than it was.
+ * The most a character may take from the left before it would reach centred
+ * content. The upper bound is not arbitrary: it is what puts the friends
+ * group about 30% wider than it was.
  */
-export const COLUMN = "clamp(170px, calc(50vw - 290px), 590px)";
+const MAX_COLUMN = "clamp(170px, calc(50vw - 290px), 590px)";
+
+/** The box every character is fitted into. */
+const STAGE_HEIGHT = "46vh";
+
+/**
+ * What a given character actually occupies.
+ *
+ * The cap above is the same for everyone, but the artwork is not: fitted into
+ * a box that tall, a solo traveller is a sliver and five friends abreast fill
+ * it. Reserving the cap for all of them would have a lone figure holding back
+ * 358px of layout to stand in 116px of it — and the option rail is centred
+ * inside whatever is left, so that space is not free, it comes straight out of
+ * how many destinations you can see at once.
+ *
+ * So each character reserves the narrower of the cap and its own fitted width.
+ */
+export function columnFor(character: CharacterId): string {
+  const { width, height } = CHARACTERS[character];
+  const aspect = width / height;
+  return `min(${MAX_COLUMN}, calc(${STAGE_HEIGHT} * ${aspect.toFixed(4)}))`;
+}
 
 export function CharacterStage({
   character,
@@ -62,9 +84,9 @@ export function CharacterStage({
     <div
       aria-hidden="true"
       className={className}
-      // The stage IS the column, so the figure occupies exactly the space an
-      // overflowing rail was told to start after.
-      style={{ width: character ? COLUMN : 0, height: "46vh" }}
+      // The stage IS the column, so the figure occupies exactly the space the
+      // rail was told to keep clear.
+      style={{ width: character ? columnFor(character) : 0, height: STAGE_HEIGHT }}
     >
       <AnimatePresence mode="wait">
         {character && (
