@@ -10,6 +10,10 @@ import { RoomPicker, decodeRooms } from "@/components/customize/RoomPicker";
 import { STEPS, type StepOption } from "@/components/customize/steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
+import { AnimatePresence } from "motion/react";
+import { CharacterStage } from "@/components/character/CharacterStage";
+import { SoloSelector } from "@/components/character/SoloSelector";
+import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
 
 /**
@@ -85,7 +89,15 @@ export function HeroTripStarter({
 
   const seasonMonths = destinations.find((d) => d.slug === chosenDestination)?.bestMonths;
 
+  /**
+   * The travelling party, once the answer resolves to one. Solo resolves only
+   * after boy or girl, so there is a beat with Solo chosen and nobody on stage
+   * — which is the point: the second question is what fills it.
+   */
+  const character = characterFor(selection.travelWith?.[0], selection.soloGender?.[0]);
+
   /** Steps with no artwork read better as pills than as picture cards. */
+  const isTravelWith = step.id === "travelWith";
   const isPills = step.id === "duration";
   const isRooms = step.custom === "rooms";
   const isDate = step.custom === "date";
@@ -124,17 +136,44 @@ export function HeroTripStarter({
         : [...chosen, optionId]
       : [optionId];
 
-    const updated = { ...selection, [step.id]: next };
+    // Changing who is coming along invalidates the boy/girl refinement — going
+    // back from Solo to Couple and forward again should ask afresh.
+    const updated: Selection = { ...selection, [step.id]: next };
+    if (step.id === "travelWith" && optionId !== "SOLO") delete updated.soloGender;
+
     setSelection(updated);
     track("customize_option_changed", { step: step.id, value: optionId, source: "hero" });
+
+    // Solo is the one answer that does not resolve on its own: it reveals the
+    // boy/girl question instead of advancing, and that answer advances.
+    if (step.id === "travelWith" && optionId === "SOLO") return;
 
     // Single-choice steps move on by themselves. The short delay lets the tick
     // register first, so the click never feels like it missed.
     if (!step.multi) window.setTimeout(() => advance(updated), 340);
   }
 
+  function chooseSoloGender(gender: string) {
+    const updated: Selection = { ...selection, soloGender: [gender] };
+    setSelection(updated);
+    track("customize_option_changed", { step: "soloGender", value: gender, source: "hero" });
+    window.setTimeout(() => advance(updated), 340);
+  }
+
   return (
-    <section aria-label="Start your trip" className="hero-trip-starter" data-direction={direction}>
+    <>
+      {/* The chosen party walks into the scene and stays for the rest of the
+          flow, watching the cursor. It sits in the left gutter, standing on
+          the far bank: the starter is bottom-anchored and its tallest step —
+          the room picker — takes about 70% of the stage, so a centred figure
+          has nowhere to stand. Desktop only; beside a full-width card on a
+          phone there is no gutter to stand in. */}
+      <CharacterStage
+        character={character}
+        className="pointer-events-none absolute bottom-[19%] left-[3vw] z-[11] hidden lg:block"
+      />
+
+      <section aria-label="Start your trip" className="hero-trip-starter" data-direction={direction}>
       {/* Full-bleed rather than boxed: the questions sit straight on the
           footage, held legible by the stage's foot gradient instead of a card. */}
       <div className="w-full px-5 text-center md:px-10">
@@ -226,6 +265,13 @@ export function HeroTripStarter({
             </OptionRail>
           )}
 
+          {/* Solo asks one more thing before it can show anyone. */}
+          <AnimatePresence>
+            {isTravelWith && chosen[0] === "SOLO" && (
+              <SoloSelector value={selection.soloGender?.[0]} onSelect={chooseSoloGender} />
+            )}
+          </AnimatePresence>
+
           {needsCta && (
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
               <p className="text-caption text-sand-100/80">
@@ -260,7 +306,8 @@ export function HeroTripStarter({
           )}
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
 
