@@ -1,4 +1,4 @@
-import type { SceneArchetype } from "@/lib/types";
+import type { SceneArchetype, ScenePalette } from "@/lib/types";
 
 /**
  * TRIP CUSTOMISER — STEP DEFINITIONS
@@ -26,6 +26,8 @@ export interface StepOption {
   /** Shown under the label on the card. */
   blurb?: string;
   scene?: SceneArchetype;
+  /** The destination's own colourway, so two "island" scenes are not twins. */
+  palette?: ScenePalette;
   /** A real photograph. Takes precedence over the generated scene. */
   image?: string;
   imageAlt?: string;

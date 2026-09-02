@@ -10,10 +10,10 @@ import { RoomPicker, decodeRooms } from "@/components/customize/RoomPicker";
 import { STEPS, type StepOption } from "@/components/customize/steps";
 import { track } from "@/lib/analytics";
 import type { DestinationCard } from "@/lib/view-models";
+import type { SceneArchetype, ScenePalette } from "@/lib/types";
 import { AnimatePresence } from "motion/react";
 import { CharacterStage, columnFor } from "@/components/character/CharacterStage";
 import { DestinationBackdrop } from "@/components/home/DestinationBackdrop";
-import { CountryCard } from "@/components/home/CountryCard";
 import { SoloSelector } from "@/components/character/SoloSelector";
 import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
@@ -40,6 +40,16 @@ export interface HeroCityOption {
   label: string;
   destinationSlug: string;
   blurb?: string;
+  /**
+   * The parent destination's archetype. Cities have no artwork of their own —
+   * there is no photograph of Ubud in the record and no scene either — so
+   * without this their cards render an empty window, which is the one thing
+   * the generated scenes exist to prevent. Seeded on the city's own slug, so
+   * three cities in one destination get three distinct silhouettes of the
+   * same kind of place rather than the same picture three times.
+   */
+  scene: SceneArchetype;
+  palette?: ScenePalette;
 }
 
 type Selection = Record<string, string[]>;
@@ -76,6 +86,7 @@ export function HeroTripStarter({
         label: d.name,
         blurb: d.tagline,
         scene: d.scene,
+        palette: d.palette,
         image: d.image,
         imageAlt: d.alt,
         video: d.video,
@@ -84,7 +95,13 @@ export function HeroTripStarter({
     if (step.id === "cities") {
       return cities
         .filter((c) => !chosenDestination || c.destinationSlug === chosenDestination)
-        .map((c) => ({ id: c.id, label: c.label, blurb: c.blurb }));
+        .map((c) => ({
+          id: c.id,
+          label: c.label,
+          blurb: c.blurb,
+          scene: c.scene,
+          palette: c.palette,
+        }));
     }
     return step.options ?? [];
   }, [step, destinations, cities, chosenDestination]);
@@ -102,7 +119,6 @@ export function HeroTripStarter({
 
   /** Steps with no artwork read better as pills than as picture cards. */
   const isTravelWith = step.id === "travelWith";
-  const isDestination = step.id === "destination";
   const isPills = step.id === "duration";
   const isRooms = step.custom === "rooms";
   const isDate = step.custom === "date";
@@ -273,21 +289,6 @@ export function HeroTripStarter({
                   />
                 ))}
               </div>
-            ) : isDestination ? (
-              // Destinations get their own card. This step is entirely about
-              // photographs of places, and the arrowhead used elsewhere masks
-              // a photograph into a point — fine for artwork, wrong for the
-              // one step where the picture is the content.
-              <OptionRail railRef={railRef} label={step.question} count={destinations.length}>
-                {destinations.map((d) => (
-                  <CountryCard
-                    key={d.slug}
-                    data={d}
-                    selected={chosen.includes(d.slug)}
-                    onSelect={() => choose(d.slug)}
-                  />
-                ))}
-              </OptionRail>
             ) : (
               <OptionRail railRef={railRef} label={step.question} count={options.length}>
                 {options.map((option) => (
@@ -673,6 +674,7 @@ function MiniCard({
           ) : option.scene ? (
             <Scene
               scene={option.scene}
+              palette={option.palette}
               seed={`hero-mini-${option.id}`}
               className="size-full transition-transform duration-[800ms] ease-[--ease-expo] group-hover/mini:scale-[1.08]"
             />

@@ -77,6 +77,10 @@ export default function HomePage() {
         label: city.name,
         destinationSlug: destination.slug,
         blurb: city.blurb,
+        // Cities carry no artwork of their own, so they borrow the
+        // destination's archetype and are seeded on their own slug.
+        scene: destination.hero.scene ?? "island",
+        palette: destination.hero.palette,
       })),
   );
 
