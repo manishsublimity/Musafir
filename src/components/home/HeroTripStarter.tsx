@@ -13,6 +13,7 @@ import type { DestinationCard } from "@/lib/view-models";
 import { AnimatePresence } from "motion/react";
 import { CharacterStage, columnFor } from "@/components/character/CharacterStage";
 import { DestinationBackdrop } from "@/components/home/DestinationBackdrop";
+import { CountryCard } from "@/components/home/CountryCard";
 import { SoloSelector } from "@/components/character/SoloSelector";
 import { characterFor } from "@/components/character/characters";
 import { cx } from "@/lib/utils";
@@ -101,6 +102,7 @@ export function HeroTripStarter({
 
   /** Steps with no artwork read better as pills than as picture cards. */
   const isTravelWith = step.id === "travelWith";
+  const isDestination = step.id === "destination";
   const isPills = step.id === "duration";
   const isRooms = step.custom === "rooms";
   const isDate = step.custom === "date";
@@ -271,6 +273,21 @@ export function HeroTripStarter({
                   />
                 ))}
               </div>
+            ) : isDestination ? (
+              // Destinations get their own card. This step is entirely about
+              // photographs of places, and the arrowhead used elsewhere masks
+              // a photograph into a point — fine for artwork, wrong for the
+              // one step where the picture is the content.
+              <OptionRail railRef={railRef} label={step.question} count={destinations.length}>
+                {destinations.map((d) => (
+                  <CountryCard
+                    key={d.slug}
+                    data={d}
+                    selected={chosen.includes(d.slug)}
+                    onSelect={() => choose(d.slug)}
+                  />
+                ))}
+              </OptionRail>
             ) : (
               <OptionRail railRef={railRef} label={step.question} count={options.length}>
                 {options.map((option) => (
@@ -377,6 +394,66 @@ function OptionRail({
     return () => observer.disconnect();
   }, [measure, railRef, count]);
 
+  /**
+   * Drag to scrub, with momentum.
+   *
+   * Pointer events rather than a drag library, because the rail is already a
+   * native scroller — touch and trackpad work without any of this, and all
+   * that is missing is click-and-drag for a mouse. Momentum is carried by
+   * `scroll-behavior` staying out of the way and a short inertial glide from
+   * the release velocity, so letting go coasts instead of stopping dead.
+   *
+   * A drag past a few pixels suppresses the click, or every drag would also
+   * pick whichever card it started on.
+   */
+  const drag = useRef({ active: false, startX: 0, startScroll: 0, lastX: 0, lastT: 0, v: 0, moved: 0 });
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== "mouse") return;
+    const el = railRef.current;
+    if (!el) return;
+    drag.current = {
+      active: true,
+      startX: event.clientX,
+      startScroll: el.scrollLeft,
+      lastX: event.clientX,
+      lastT: performance.now(),
+      v: 0,
+      moved: 0,
+    };
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = railRef.current;
+    if (!d.active || !el) return;
+    const now = performance.now();
+    const dt = Math.max(1, now - d.lastT);
+    d.v = (event.clientX - d.lastX) / dt;
+    d.lastX = event.clientX;
+    d.lastT = now;
+    d.moved = Math.max(d.moved, Math.abs(event.clientX - d.startX));
+    el.scrollLeft = d.startScroll - (event.clientX - d.startX);
+  };
+
+  const endDrag = () => {
+    const d = drag.current;
+    const el = railRef.current;
+    if (!d.active || !el) return;
+    d.active = false;
+    // Coast. 220 is a plain feel-tuned multiplier on px/ms.
+    const glide = -d.v * 220;
+    if (Math.abs(glide) > 12) el.scrollBy({ left: glide, behavior: "smooth" });
+  };
+
+  const suppressClickAfterDrag = (event: React.MouseEvent) => {
+    if (drag.current.moved > 5) {
+      event.preventDefault();
+      event.stopPropagation();
+      drag.current.moved = 0;
+    }
+  };
+
   const nudge = (by: number) => {
     const el = railRef.current;
     if (!el) return;
@@ -417,6 +494,11 @@ function OptionRail({
       <div
         ref={railRef}
         onScroll={measure}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerLeave={endDrag}
+        onClickCapture={suppressClickAfterDrag}
         role="group"
         aria-label={label}
         tabIndex={edges.overflowing ? 0 : -1}
