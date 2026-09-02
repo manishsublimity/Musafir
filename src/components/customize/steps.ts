@@ -1,4 +1,5 @@
 import type { SceneArchetype, ScenePalette } from "@/lib/types";
+import { MEDIA_IMAGES, MEDIA_VIDEOS } from "@/content/media-index.generated";
 
 /**
  * TRIP CUSTOMISER — STEP DEFINITIONS
@@ -61,22 +62,36 @@ export interface StepDefinition {
   custom?: "date" | "rooms";
 }
 
+/**
+ * Step cards follow the same convention as destinations: drop `nature.jpg` into
+ * `public/media/images` or `nature.mp4` into `public/media/videos` and the
+ * card picks it up on the next build, falling back to its generated scene when
+ * the file is not there. The id lowercased is the filename stem.
+ */
+function vibeMedia(id: string): Pick<StepOption, "image" | "video"> {
+  const stem = id.toLowerCase();
+  return {
+    ...(MEDIA_IMAGES[stem] ? { image: MEDIA_IMAGES[stem] } : {}),
+    ...(MEDIA_VIDEOS[stem] ? { video: MEDIA_VIDEOS[stem] } : {}),
+  };
+}
+
 /** Party types that actually need to divide people across rooms. */
 const NEEDS_ROOMS = ["FAMILY", "FRIENDS"];
 
 export const TRAVEL_WITH: StepOption[] = [
-  { id: "COUPLE", label: "Couple", blurb: "Romantic escapes made unforgettable", scene: "island", image: "/images/couple.png", imageAlt: "A couple on a coastal viewpoint at golden hour" },
-  { id: "FAMILY", label: "Family", blurb: "Memories today, treasured forever", scene: "beach", image: "/images/family.png", imageAlt: "A family together on holiday" },
-  { id: "FRIENDS", label: "Friends", blurb: "Adventures are always better together", scene: "mountain", image: "/images/friends.png", imageAlt: "A group of friends travelling together" },
-  { id: "SOLO", label: "Solo", blurb: "Find yourself in new places", scene: "forest", image: "/images/solo.png", imageAlt: "A solo traveller with a warm drink" },
+  { id: "COUPLE", label: "Couple", blurb: "Romantic escapes made unforgettable", scene: "island", image: "/images/couple.png", imageAlt: "A couple on a coastal viewpoint at golden hour", ...vibeMedia("COUPLE") },
+  { id: "FAMILY", label: "Family", blurb: "Memories today, treasured forever", scene: "beach", image: "/images/family.png", imageAlt: "A family together on holiday", ...vibeMedia("FAMILY") },
+  { id: "FRIENDS", label: "Friends", blurb: "Adventures are always better together", scene: "mountain", image: "/images/friends.png", imageAlt: "A group of friends travelling together", ...vibeMedia("FRIENDS") },
+  { id: "SOLO", label: "Solo", blurb: "Find yourself in new places", scene: "forest", image: "/images/solo.png", imageAlt: "A solo traveller with a warm drink", ...vibeMedia("SOLO") },
 ];
 
 export const VIBES: StepOption[] = [
-  { id: "LEISURE", label: "Leisure", blurb: "Slow mornings, nothing scheduled", scene: "island" },
-  { id: "NATURE", label: "Nature", blurb: "Forests, falls and open country", scene: "forest" },
-  { id: "ATTRACTION", label: "Attraction", blurb: "The landmarks you came for", scene: "heritage" },
-  { id: "CULTURE", label: "Culture", blurb: "Food, streets and the everyday", scene: "city" },
-  { id: "ADVENTURE", label: "Adventure", blurb: "Something to be nervous about", scene: "mountain" },
+  { id: "LEISURE", label: "Leisure", blurb: "Slow mornings, nothing scheduled", scene: "island", ...vibeMedia("LEISURE") },
+  { id: "NATURE", label: "Nature", blurb: "Forests, falls and open country", scene: "forest", ...vibeMedia("NATURE") },
+  { id: "ATTRACTION", label: "Attraction", blurb: "The landmarks you came for", scene: "heritage", ...vibeMedia("ATTRACTION") },
+  { id: "CULTURE", label: "Culture", blurb: "Food, streets and the everyday", scene: "city", ...vibeMedia("CULTURE") },
+  { id: "ADVENTURE", label: "Adventure", blurb: "Something to be nervous about", scene: "mountain", ...vibeMedia("ADVENTURE") },
 ];
 
 export const DURATIONS: StepOption[] = [

@@ -5,10 +5,13 @@
   "description": "Musafir Travels — immersive motion travel-commerce platform",
   "scripts": {
     "dev": "next dev",
+    "predev": "node scripts/scan-media.mjs",
     "build": "next build",
+    "prebuild": "node scripts/scan-media.mjs",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "media": "node scripts/scan-media.mjs"
   },
   "dependencies": {
     "gsap": "^3.13.0",
